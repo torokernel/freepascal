@@ -13,13 +13,12 @@ loaders=$(LOADERS)
 units=$(SYSTEMUNIT) $(SYSINIT_UNITS) initc uuchar objpas macpas iso7185 extpas strings syscall baseunix \
       $(LINUXUNIT) unixtype unixutil unix ctypes bsd \
       $(CPU_UNITS) dos rtlconsts \
-      sysutils sortbase fgl classes typinfo math \
+      sysutils fgl classes typinfo math \
       charset cpall character getopts heaptrc lineinfo lnfodwrf \
       errors \
       types sysctl sysconst \
       fpintres dynlibs cwstring cmem dl termio \
-      cthreads unixcp fpwidestring \
-      softfpu sfpux80 ufloatx80 sfpu128 ufloat128
+      cthreads unixcp fpwidestring
 
 rsts=math typinfo classes sysconst
 implicitunits=exeinfo \
@@ -74,11 +73,6 @@ PRT0=prt0
 # which will not be recompiled
 ifdef RELEASE
 override FPCOPT+=-Ur
-endif
-
-# OpenBSD defaults to libc, no syscalls
-ifeq ($(FPC_USE_SYSCALL),)
-override FPCOPT+=-dFPC_USE_LIBC
 endif
 
 CPU_UNITS=
@@ -220,10 +214,10 @@ sysutils$(PPUEXT) : $(UNIXINC)/sysutils.pp $(wildcard $(OBJPASDIR)/sysutils/*.in
         $(COMPILER) -Fi$(OBJPASDIR)/sysutils $(UNIXINC)/sysutils.pp
 
 classes$(PPUEXT) : $(UNIXINC)/classes.pp $(wildcard $(OBJPASDIR)/classes/*.inc) \
-                   sysutils$(PPUEXT) typinfo$(PPUEXT) fgl$(PPUEXT) sortbase$(PPUEXT)
+                   sysutils$(PPUEXT) typinfo$(PPUEXT) fgl$(PPUEXT)
         $(COMPILER) -Fi$(OBJPASDIR)/classes $(UNIXINC)/classes.pp
 
-fgl$(PPUEXT) : $(OBJPASDIR)/fgl.pp objpas$(PPUEXT) types$(PPUEXT) system$(PPUEXT) sysutils$(PPUEXT) sortbase$(PPUEXT)
+fgl$(PPUEXT) : $(OBJPASDIR)/fgl.pp objpas$(PPUEXT) types$(PPUEXT) system$(PPUEXT) sysutils$(PPUEXT)
         $(COMPILER) $(OBJPASDIR)/fgl.pp
 
 rtlconsts$(PPUEXT) : $(OBJPASDIR)/rtlconsts.pp
@@ -323,9 +317,6 @@ bsd$(PPUEXT) : $(BSDINC)/bsd.pas unix$(PPUEXT) syscall$(PPUEXT) $(SYSTEMUNIT)$(P
 initc$(PPUEXT) : $(UNIXINC)/initc.pp ctypes$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
         $(COMPILER) $<
 
-sortbase$(PPUEXT) : $(INC)/sortbase.pp objpas$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<
-
 #
 # Other system-dependent RTL Units
 #
@@ -357,17 +348,3 @@ cthreads$(PPUEXT) : $(UNIXINC)/cthreads.pp
 rtlconst$(PPUEXT) : $(OBJPASDIR)/rtlconst.pp
         $(COMPILER) $(OBJPASDIR)/rtlconst.pp
 
-softfpu$(PPUEXT) : $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-sfpux80$(PPUEXT) : $(INC)/sfpux80.pp $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-sfpu128$(PPUEXT) : $(INC)/sfpu128.pp $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-ufloatx80$(PPUEXT) : $(INC)/ufloatx80.pp sfpux80$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<
-
-ufloat128$(PPUEXT) : $(INC)/ufloat128.pp sfpu128$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<

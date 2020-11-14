@@ -203,19 +203,6 @@ begin
   Variantmanager.varfromInt64(Dest,Source);
 end;
 
-
-operator :=(const source : NativeInt) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
-begin
-  dest:=PtrInt(source);
-end;
-
-
-operator :=(const source : NativeUInt) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
-begin
-  dest:=PtrUInt(source);
-end;
-
-
 { Boolean }
 
 operator :=(const source : boolean) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
@@ -405,18 +392,6 @@ end;
 operator :=(const source : variant) dest : int64;{$ifdef SYSTEMINLINE}inline;{$endif}
 begin
   dest:=variantmanager.vartoint64(source);
-end;
-
-
-operator :=(const source : variant) dest : NativeInt;{$ifdef SYSTEMINLINE}inline;{$endif}
-begin
-  PtrInt(dest):=source;
-end;
-
-
-operator :=(const source : variant) dest : NativeUInt;{$ifdef SYSTEMINLINE}inline;{$endif}
-begin
-  PtrUInt(dest):=source;
 end;
 
 
@@ -1101,7 +1076,7 @@ function Null: Variant;       // Null standard constant
                       Variant manager functions
  **********************************************************************}
 
-procedure GetVariantManager(out VarMgr: TVariantManager);
+procedure GetVariantManager(var VarMgr: TVariantManager);
 begin
   VarMgr:=VariantManager;
 end;

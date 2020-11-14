@@ -35,7 +35,6 @@ uses
 {$DEFINE HAS_LOCALTIMEZONEOFFSET}
 {$DEFINE HAS_GETTICKCOUNT}
 {$DEFINE HAS_GETTICKCOUNT64}
-{$DEFINE HAS_FILEDATETIME}
 {$DEFINE OS_FILESETDATEBYNAME}
 
 // this target has an fileflush implementation, don't include dummy
@@ -395,36 +394,24 @@ begin
 end;
 
 
-Function FileAge (Const FileName : UnicodeString): Int64;
+Function FileAge (Const FileName : UnicodeString): Longint;
 var
   Handle: THandle;
   FindData: TWin32FindDataW;
-  tmpdtime    : longint;
 begin
   Handle := FindFirstFileW(Pwidechar(FileName), FindData);
   if Handle <> INVALID_HANDLE_VALUE then
     begin
       Windows.FindClose(Handle);
       if (FindData.dwFileAttributes and FILE_ATTRIBUTE_DIRECTORY) = 0 then
-        If WinToDosTime(FindData.ftLastWriteTime,tmpdtime) then
-          begin
-            result:=tmpdtime;
-            exit;
-          end;
+        If WinToDosTime(FindData.ftLastWriteTime,Result) then
+          exit;
     end;
   Result := -1;
 end;
 
 
-type
-  TSymLinkResult = (
-    slrOk,
-    slrNoSymLink,
-    slrError
-  );
-
-
-function FileGetSymLinkTargetInt(const FileName: UnicodeString; out SymLinkRec: TUnicodeSymLinkRec; RaiseErrorOnMissing: Boolean): TSymLinkResult;
+function FileGetSymLinkTargetInt(const FileName: UnicodeString; out SymLinkRec: TUnicodeSymLinkRec; RaiseErrorOnMissing: Boolean): Boolean;
 { reparse point specific declarations from Windows headers }
 const
   IO_REPARSE_TAG_MOUNT_POINT = $A0000003;
@@ -460,7 +447,6 @@ var
   PBuffer: ^TReparseDataBuffer;
   BytesReturned: DWORD;
 begin
-  Result := slrError;
   SymLinkRec := Default(TUnicodeSymLinkRec);
 
   HFile := CreateFileW(PUnicodeChar(FileName), FILE_READ_EA, CShareAny, Nil, OPEN_EXISTING, COpenReparse, 0);
@@ -486,21 +472,16 @@ begin
             end;
           end;
 
-          if SymLinkRec.TargetName <> '' then begin
-            Handle := FindFirstFileExW(PUnicodeChar(SymLinkRec.TargetName), FindExInfoDefaults , @SymLinkRec.FindData,
-                        FindExSearchNameMatch, Nil, 0);
-            if Handle <> INVALID_HANDLE_VALUE then begin
-              Windows.FindClose(Handle);
-              SymLinkRec.Attr := SymLinkRec.FindData.dwFileAttributes;
-              SymLinkRec.Size := QWord(SymLinkRec.FindData.nFileSizeHigh) shl 32 + QWord(SymLinkRec.FindData.nFileSizeLow);
-            end else if RaiseErrorOnMissing then
-              raise EDirectoryNotFoundException.Create(SysErrorMessage(GetLastOSError))
-            else
-              SymLinkRec.TargetName := '';
-          end else begin
-            SetLastError(ERROR_REPARSE_TAG_INVALID);
-            Result := slrNoSymLink;
-          end;
+          Handle := FindFirstFileExW(PUnicodeChar(SymLinkRec.TargetName), FindExInfoDefaults , @SymLinkRec.FindData,
+                      FindExSearchNameMatch, Nil, 0);
+          if Handle <> INVALID_HANDLE_VALUE then begin
+            Windows.FindClose(Handle);
+            SymLinkRec.Attr := SymLinkRec.FindData.dwFileAttributes;
+            SymLinkRec.Size := QWord(SymLinkRec.FindData.nFileSizeHigh) shl 32 + QWord(SymLinkRec.FindData.nFileSizeLow);
+          end else if RaiseErrorOnMissing then
+            raise EDirectoryNotFoundException.Create(SysErrorMessage(GetLastOSError))
+          else
+            SymLinkRec.TargetName := '';
         end else
           SetLastError(ERROR_REPARSE_TAG_INVALID);
       finally
@@ -509,15 +490,13 @@ begin
     finally
       CloseHandle(HFile);
     end;
-
-  if SymLinkRec.TargetName <> '' then
-    Result := slrOk
+  Result := SymLinkRec.TargetName <> '';
 end;
 
 
 function FileGetSymLinkTarget(const FileName: UnicodeString; out SymLinkRec: TUnicodeSymLinkRec): Boolean;
 begin
-  Result := FileGetSymLinkTargetInt(FileName, SymLinkRec, True) = slrOk;
+  Result := FileGetSymLinkTargetInt(FileName, SymLinkRec, True);
 end;
 
 
@@ -540,6 +519,14 @@ const
     end;
   end;
 
+  function LinkFileExists: Boolean;
+  var
+    slr: TUnicodeSymLinkRec;
+  begin
+    Result := FileGetSymLinkTargetInt(FileOrDirName, slr, False) and
+                FileOrDirExists(slr.TargetName, CheckDir, False);
+  end;
+
 const
   CNotExistsErrors = [
     ERROR_FILE_NOT_FOUND,
@@ -554,25 +541,14 @@ const
   ];
 var
   Attr : DWord;
-  slr : TUnicodeSymLinkRec;
-  res : TSymLinkResult;
 begin
   Attr := GetFileAttributesW(PUnicodeChar(FileOrDirName));
   if Attr = INVALID_FILE_ATTRIBUTES then
     Result := not (GetLastError in CNotExistsErrors) and FoundByEnum
   else begin
     Result := (Attr and FILE_ATTRIBUTE_DIRECTORY) = CDirAttributes[CheckDir];
-    if Result and FollowLink and ((Attr and FILE_ATTRIBUTE_REPARSE_POINT) <> 0) then begin
-      res := FileGetSymLinkTargetInt(FileOrDirName, slr, False);
-      case res of
-        slrOk:
-          Result := FileOrDirExists(slr.TargetName, CheckDir, False);
-        slrNoSymLink:
-          Result := True;
-        else
-          Result := False;
-      end;
-    end;
+    if Result and FollowLink and ((Attr and FILE_ATTRIBUTE_REPARSE_POINT) <> 0) then
+      Result := LinkFileExists;
   end;
 end;
 
@@ -589,8 +565,6 @@ begin
 end;
 
 Function FindMatch(var f: TAbstractSearchRec; var Name: UnicodeString) : Longint;
-var
-  tmpdtime : longint;
 begin
   { Find file with correct attribute }
   While (F.FindData.dwFileAttributes and cardinal(F.ExcludeAttr))<>0 do
@@ -602,8 +576,7 @@ begin
       end;
    end;
   { Convert some attributes back }
-  WinToDosTime(F.FindData.ftLastWriteTime,tmpdtime);
-  F.Time:=tmpdtime;
+  WinToDosTime(F.FindData.ftLastWriteTime,F.Time);
   f.size:=F.FindData.NFileSizeLow+(qword(maxdword)+1)*F.FindData.NFileSizeHigh;
   f.attr:=F.FindData.dwFileAttributes;
   Name:=F.FindData.cFileName;
@@ -651,39 +624,17 @@ end;
 
 
 
-Function FileGetDate (Handle : THandle) : Int64;
+Function FileGetDate (Handle : THandle) : Longint;
 Var
   FT : TFileTime;
-  tmpdtime : longint;
 begin
   If GetFileTime(Handle,nil,nil,@ft) and
-     WinToDosTime(FT,tmpdtime) then
-    begin
-      result:=tmpdtime;
-      exit;
-    end;
+     WinToDosTime(FT,Result) then
+    exit;
   Result:=-1;
 end;
 
-Function FileGetDate (Handle : THandle; out FileDateTime: TDateTime) : Boolean;
-Var
-  FT : TFileTime;
-begin
-  Result :=
-     GetFileTime(Handle,nil,nil,@ft) and
-     FindDataTimeToDateTime(FT, FileDateTime);
-end;
-
-Function FileGetDateUTC (Handle : THandle; out FileDateTimeUTC: TDateTime) : Boolean;
-Var
-  FT : TFileTime;
-begin
-  Result :=
-     GetFileTime(Handle,nil,nil,@ft) and
-     FindDataTimeToUTC(FT, FileDateTimeUTC);
-end;
-
-Function FileSetDate (Handle : THandle;Age : Int64) : Longint;
+Function FileSetDate (Handle : THandle;Age : Longint) : Longint;
 Var
   FT: TFileTime;
 begin
@@ -694,34 +645,8 @@ begin
   Result := GetLastError;
 end;
 
-Function FileSetDate (Handle : THandle; const FileDateTime: TDateTime) : Longint;
-var
-  FT: TFiletime;
-  LT: TFiletime;
-  ST: TSystemTime;
-begin
-  DateTimeToSystemTime(FileDateTime,ST);
-  if SystemTimeToFileTime(ST,LT) and LocalFileTimeToFileTime(LT,FT)
-    and SetFileTime(Handle,nil,nil,@FT) then
-    Result:=0
-  else
-    Result:=GetLastError;
-end;
-
-Function FileSetDateUTC (Handle : THandle; const FileDateTimeUTC: TDateTime) : Longint;
-var
-  FT: TFiletime;
-  ST: TSystemTime;
-begin
-  DateTimeToSystemTime(FileDateTimeUTC,ST);
-  if SystemTimeToFileTime(ST,FT) and SetFileTime(Handle,nil,nil,@FT) then
-    Result:=0
-  else
-    Result:=GetLastError;
-end;
-
 {$IFDEF OS_FILESETDATEBYNAME}
-Function FileSetDate (Const FileName : UnicodeString;Age : Int64) : Longint;
+Function FileSetDate (Const FileName : UnicodeString;Age : Longint) : Longint;
 Var
   fd : THandle;
 begin
@@ -731,40 +656,6 @@ begin
   If (Fd<>feInvalidHandle) then
     try
       Result:=FileSetDate(fd,Age);
-    finally
-      FileClose(fd);
-    end
-  else
-    Result:=GetLastOSError;
-end;
-
-Function FileSetDate (Const FileName : UnicodeString;const FileDateTime : TDateTime) : Longint;
-Var
-  fd : THandle;
-begin
-  FD := CreateFileW (PWideChar (FileName), GENERIC_READ or GENERIC_WRITE,
-                     FILE_SHARE_WRITE, nil, OPEN_EXISTING,
-                     FILE_FLAG_BACKUP_SEMANTICS, 0);
-  If (Fd<>feInvalidHandle) then
-    try
-      Result:=FileSetDate(fd,FileDateTime);
-    finally
-      FileClose(fd);
-    end
-  else
-    Result:=GetLastOSError;
-end;
-
-Function FileSetDateUTC (Const FileName : UnicodeString;const FileDateTimeUTC : TDateTime) : Longint;
-Var
-  fd : THandle;
-begin
-  FD := CreateFileW (PWideChar (FileName), GENERIC_READ or GENERIC_WRITE,
-                     FILE_SHARE_WRITE, nil, OPEN_EXISTING,
-                     FILE_FLAG_BACKUP_SEMANTICS, 0);
-  If (Fd<>feInvalidHandle) then
-    try
-      Result:=FileSetDateUTC(fd,FileDateTimeUTC);
     finally
       FileClose(fd);
     end
@@ -892,12 +783,6 @@ begin
   windows.Getlocaltime(SystemTime);
 end;
 
-function GetUniversalTime(var SystemTime: TSystemTime): Boolean;
-begin
-  windows.GetSystemTime(SystemTime);
-  Result:=True;
-end;
-
 function GetLocalTimeOffset: Integer;
 
 var
@@ -917,76 +802,6 @@ begin
 end;
 
 
-function GetLocalTimeOffset(const DateTime: TDateTime; const InputIsUTC: Boolean; out Offset: Integer): Boolean;
-var
-  Year: Integer;
-const
-  DaysPerWeek = 7;
-
-  // MonthOf and YearOf are not available in SysUtils
-  function MonthOf(const AValue: TDateTime): Word;
-  var
-    Y,D : Word;
-  begin
-    DecodeDate(AValue,Y,Result,D);
-  end;
-  function YearOf(const AValue: TDateTime): Word;
-  var
-    D,M : Word;
-  begin
-    DecodeDate(AValue,Result,D,M);
-  end;
-
-  function RelWeekDayToDateTime(const SysTime: TSystemTime): TDateTime;
-  var
-    WeekDay, IncDays: Integer;
-  begin
-    // get first day in month
-    Result := EncodeDate(Year, SysTime.Month, 1);
-    WeekDay := DayOfWeek(Result)-1;
-    // get the correct first weekday in month
-    IncDays := SysTime.wDayOfWeek-WeekDay;
-    if IncDays<0 then
-      Inc(IncDays, DaysPerWeek);
-    // inc weeks
-    Result := Result+IncDays+DaysPerWeek*(SysTime.Day-1);
-    // SysTime.DayOfWeek=5 means the last one - check if we are not in the next month
-    while (MonthOf(Result)>SysTime.Month) do
-      Result := Result-DaysPerWeek;
-    Result := Result+EncodeTime(SysTime.Hour, SysTime.Minute, SysTime.Second, SysTime.Millisecond);
-  end;
-
-var
-  TZInfo: TTimeZoneInformation;
-  DSTStart, DSTEnd: TDateTime;
-
-begin
-  Year := YearOf(DateTime);
-  TZInfo := Default(TTimeZoneInformation);
-  // GetTimeZoneInformationForYear is supported only on Vista and newer
-  if not ((Win32MajorVersion>=6) and GetTimeZoneInformationForYear(Year, nil, TZInfo)) then
-    Exit(False);
-
-  if (TZInfo.StandardDate.Month>0) and (TZInfo.DaylightDate.Month>0) then
-  begin // there is DST
-    // DaylightDate and StandardDate are local times
-    DSTStart := RelWeekDayToDateTime(TZInfo.DaylightDate);
-    DSTEnd := RelWeekDayToDateTime(TZInfo.StandardDate);
-    if InputIsUTC then
-    begin
-      DSTStart := DSTStart + (TZInfo.Bias+TZInfo.StandardBias)/MinsPerDay;
-      DSTEnd := DSTEnd + (TZInfo.Bias+TZInfo.DaylightBias)/MinsPerDay;
-    end;
-    if (DSTStart<=DateTime) and (DateTime<DSTEnd) then
-      Offset := TZInfo.Bias+TZInfo.DaylightBias
-    else
-      Offset := TZInfo.Bias+TZInfo.StandardBias;
-  end else // no DST
-    Offset := TZInfo.Bias;
-  Result := True;
-end;
-
-
 function GetTickCount: LongWord;
 begin
   Result := Windows.GetTickCount;
@@ -1002,13 +817,19 @@ var
 {$ENDIF}
 
 function GetTickCount64: QWord;
+{$IFNDEF WINCE}
+var
+  lib: THandle;
+{$ENDIF}
 begin
 {$IFNDEF WINCE}
-  if Assigned(WinGetTickCount64) then
-    Exit(WinGetTickCount64());
   { on Vista and newer there is a GetTickCount64 implementation }
   if Win32MajorVersion >= 6 then begin
-    WinGetTickCount64 := TGetTickCount64(GetProcAddress(GetModuleHandle('kernel32.dll'), 'GetTickCount64'));
+    if not Assigned(WinGetTickCount64) then begin
+      lib := LoadLibrary('kernel32.dll');
+      WinGetTickCount64 := TGetTickCount64(
+                             GetProcAddress(lib, 'GetTickCount64'));
+    end;
     Result := WinGetTickCount64();
   end else
 {$ENDIF}
@@ -1261,20 +1082,16 @@ end;
 
 Procedure InitInternational;
 var
-{$if defined(CPU386) or defined(CPUX86_64)}
   { A call to GetSystemMetrics changes the value of the 8087 Control Word on
     Pentium4 with WinXP SP2 }
   old8087CW: word;
-{$endif}
   DefaultCustomLocaleID : LCID;   // typedef DWORD LCID;
   DefaultCustomLanguageID : Word; // typedef WORD LANGID;
 begin
   /// workaround for Windows 7 bug, see bug report #18574
   SetThreadLocale(GetUserDefaultLCID);
   InitInternationalGeneric;
-{$if defined(CPU386) or defined(CPUX86_64)}
   old8087CW:=Get8087CW;
-{$endif}
   SysLocale.MBCS:=GetSystemMetrics(SM_DBCSENABLED)<>0;
   SysLocale.RightToLeft:=GetSystemMetrics(SM_MIDEASTENABLED)<>0;
   SysLocale.DefaultLCID := $0409;
@@ -1304,9 +1121,7 @@ begin
         end;
      end;
 
-{$if defined(CPU386) or defined(CPUX86_64)}
   Set8087CW(old8087CW);
-{$endif}
   GetFormatSettings;
   if SysLocale.FarEast then GetEraNamesAndYearOffsets;
 end;

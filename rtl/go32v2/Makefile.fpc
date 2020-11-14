@@ -7,13 +7,12 @@ main=rtl
 loaders=prt0 exceptn fpu
 units=system uuchar objpas macpas iso7185 extpas strings \
       go32 dpmiexcp initc ports profile dxetype dxeload emu387 \
-      dos cmem sortbase \
+      dos cmem \
       sysutils classes math typinfo \
       cpu mmx getopts heaptrc lineinfo lnfodwrf ctypes fgl \
       msmouse charset cpall \
       character fpwidestring unicodedata unicodenumtable \
-      types sysconst rtlconst \
-      softfpu sfpux80 ufloatx80 sfpu128 ufloat128
+      types sysconst rtlconst
 rsts=math typinfo classes sysconst
 implicitunits=exeinfo \
       cp1250 cp1251 cp1252 cp1253 cp1254 cp1255 cp1256 cp1257 cp1258 \
@@ -156,11 +155,10 @@ sysutils$(PPUEXT) : sysutils.pp $(wildcard $(OBJPASDIR)/sysutils/*.inc) \
 	$(EXECPPAS)
 
 classes$(PPUEXT) : classes.pp $(wildcard $(OBJPASDIR)/classes/*.inc) \
-		   sysutils$(PPUEXT) typinfo$(PPUEXT) rtlconst$(PPUEXT) types$(PPUEXT) fgl$(PPUEXT) \
-		   sortbase$(PPUEXT)
+		   sysutils$(PPUEXT) typinfo$(PPUEXT) rtlconst$(PPUEXT) types$(PPUEXT) fgl$(PPUEXT)
 	$(COMPILER) -Fi$(OBJPASDIR)/classes classes.pp
 
-fgl$(PPUEXT) : $(OBJPASDIR)/fgl.pp objpas$(PPUEXT) types$(PPUEXT) system$(PPUEXT) sysutils$(PPUEXT) sortbase$(PPUEXT)
+fgl$(PPUEXT) : $(OBJPASDIR)/fgl.pp objpas$(PPUEXT) types$(PPUEXT) system$(PPUEXT) sysutils$(PPUEXT)
 	$(COMPILER) $(OBJPASDIR)/fgl.pp
 	$(EXECPPAS)
 
@@ -245,8 +243,6 @@ unicodenumtable$(PPUEXT) : $(OBJPASDIR)/unicodenumtable.pas system$(PPUEXT)
 unicodedata$(PPUEXT) : $(OBJPASDIR)/unicodedata.pas unicodenumtable$(PPUEXT) system$(PPUEXT)
         $(COMPILER) -Fi$(OBJPASDIR) $(OBJPASDIR)/unicodedata.pas
 
-sortbase$(PPUEXT) : $(INC)/sortbase.pp objpas$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<
 
 #
 # Other system-dependent RTL Units
@@ -266,18 +262,3 @@ cmem$(PPUEXT) : $(INC)/cmem.pp $(SYSTEMUNIT)$(PPUEXT)
 ctypes$(PPUEXT) : $(INC)/ctypes.pp system$(PPUEXT)
 	$(COMPILER) $(INC)/ctypes.pp
 	$(EXECPPAS)
-
-softfpu$(PPUEXT) : $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-sfpux80$(PPUEXT) : $(INC)/sfpux80.pp $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-sfpu128$(PPUEXT) : $(INC)/sfpu128.pp $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-ufloatx80$(PPUEXT) : $(INC)/ufloatx80.pp sfpux80$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<
-
-ufloat128$(PPUEXT) : $(INC)/ufloat128.pp sfpu128$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<

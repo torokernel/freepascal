@@ -10,13 +10,12 @@ loaders=$(LOADERS)
 units=system $(SYSINITUNITS) uuchar baseunix unixtype ctypes objpas macpas iso7185 extpas strings \
       errors dos dl \
       sysconst sysutils \
-      types charset cpall character typinfo sortbase classes fgl math \
+      types charset cpall character typinfo classes fgl math \
       cpu $(CPUUNITS) getopts heaptrc lineinfo lnfodwrf \
       rtlconsts unix unixutil termio initc \
       cmem \
       dynlibs cwstring cthreads \
-      fpintres unixcp fpwidestring \
-      softfpu sfpux80 ufloatx80 sfpu128 ufloat128
+      fpintres unixcp fpwidestring
 
 # beos syscall
 
@@ -178,11 +177,11 @@ sysutils$(PPUEXT) : $(UNIXINC)/sysutils.pp $(wildcard $(OBJPASDIR)/sysutils/*.in
         $(COMPILER) -Fi$(OBJPASDIR)/sysutils -Fi$(UNIXINC) $(UNIXINC)/sysutils.pp
 
 classes$(PPUEXT) : classes.pp $(wildcard $(OBJPASDIR)/classes/*.inc) \
-                   sysutils$(PPUEXT) typinfo$(PPUEXT) types$(PPUEXT) rtlconsts$(PPUEXT) sortbase$(PPUEXT)
+                   sysutils$(PPUEXT) typinfo$(PPUEXT) types$(PPUEXT) rtlconsts$(PPUEXT) 
 #                   systhrd$(PPUEXT)
         $(COMPILER) -Fi$(OBJPASDIR) -Fi$(OBJPASDIR)/classes classes.pp
 
-fgl$(PPUEXT) : $(OBJPASDIR)/fgl.pp objpas$(PPUEXT) types$(PPUEXT) system$(PPUEXT) sysutils$(PPUEXT) sortbase$(PPUEXT)
+fgl$(PPUEXT) : $(OBJPASDIR)/fgl.pp objpas$(PPUEXT) types$(PPUEXT) system$(PPUEXT) sysutils$(PPUEXT)
         $(COMPILER) $(OBJPASDIR)/fgl.pp
 
 typinfo$(PPUEXT): $(OBJPASDIR)/typinfo.pp objpas$(PPUEXT)
@@ -253,10 +252,6 @@ fpintres$(PPUEXT) : $(INC)/fpintres.pp $(SYSTEMUNIT)$(PPUEXT)
 
 fpwidestring$(PPUEXT) : $(OBJPASDIR)/fpwidestring.pp character$(PPUEXT) unixcp$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
         $(COMPILER) $(OBJPASDIR)/fpwidestring.pp
-
-sortbase$(PPUEXT) : $(INC)/sortbase.pp objpas$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<
-
 #
 # Other system-dependent RTL Units
 #
@@ -285,18 +280,3 @@ cwstring$(PPUEXT) : $(UNIXINC)/cwstring.pp $(SYSTEMUNIT)$(PPUEXT) sysutils$(PPUE
 
 ctypes$(PPUEXT) :  $(INC)/ctypes.pp unixtype$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
         $(COMPILER) $(INC)/ctypes.pp
-
-softfpu$(PPUEXT) : $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-sfpux80$(PPUEXT) : $(INC)/sfpux80.pp $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-sfpu128$(PPUEXT) : $(INC)/sfpu128.pp $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-ufloatx80$(PPUEXT) : $(INC)/ufloatx80.pp sfpux80$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<
-
-ufloat128$(PPUEXT) : $(INC)/ufloat128.pp sfpu128$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<

@@ -162,7 +162,6 @@ Type  PINTRTLEvent = ^TINTRTLEvent;
       var
         dataindex : pointer;
       begin
-{$ifndef FPC_SECTION_THREADVARS}
         { we've to allocate the memory from system  }
         { because the FPC heap management uses      }
         { exceptions which use threadvars but       }
@@ -171,7 +170,6 @@ Type  PINTRTLEvent = ^TINTRTLEvent;
         DataIndex:=Pointer(Fpmmap(nil,threadvarblocksize,3,MAP_PRIVATE+MAP_ANONYMOUS,-1,0));
         FillChar(DataIndex^,threadvarblocksize,0);
         pthread_setspecific(tlskey,dataindex);
-{$endif FPC_SECTION_THREADVARS}
       end;
 
 
@@ -236,9 +234,7 @@ Type  PINTRTLEvent = ^TINTRTLEvent;
 
     procedure CReleaseThreadVars;
       begin
-{$ifndef FPC_SECTION_THREADVARS}
         Fpmunmap(pointer(pthread_getspecific(tlskey)),threadvarblocksize);
-{$endif FPC_SECTION_THREADVARS}
       end;
 
 { Include OS independent Threadvar initialization }
@@ -305,11 +301,9 @@ Type  PINTRTLEvent = ^TINTRTLEvent;
         fpwrite(0,s[1],length(s));
 {$endif DEBUG_MT}
         ti:=pthreadinfo(param)^;
-
+        dispose(pthreadinfo(param));
         { Initialize thread }
         InitThread(ti.stklen);
-
-        dispose(pthreadinfo(param));
         { Start thread function }
 {$ifdef DEBUG_MT}
         writeln('Jumping to thread function');
@@ -357,12 +351,7 @@ Type  PINTRTLEvent = ^TINTRTLEvent;
       { Initialize multithreading if not done }
       if not TLSInitialized then
         InitCTLS;
-      if not IsMultiThread then
-        begin
-          { We're still running in single thread mode, lazy initialize thread support }
-           LazyInitThreading;
-           IsMultiThread:=true;
-        end;
+      IsMultiThread:=true;
 
       { the only way to pass data to the newly created thread
         in a MT safe way, is to use the heap }
@@ -489,51 +478,6 @@ Type  PINTRTLEvent = ^TINTRTLEvent;
   function  CGetCurrentThreadId : TThreadID;
     begin
       CGetCurrentThreadId := TThreadID (pthread_self());
-    end;
-
-
-  procedure CSetThreadDebugNameA(threadHandle: TThreadID; const ThreadName: AnsiString);
-{$if defined(Linux) or defined(Android)}
-    var
-      CuttedName: AnsiString;
-{$endif}
-    begin
-{$if defined(Linux) or defined(Android)}
-      if ThreadName = '' then
-        Exit;
-  {$ifdef dynpthreads}
-      if Assigned(pthread_setname_np) then
-  {$endif dynpthreads}
-      begin
-        // length restricted to 16 characters including terminating null byte
-        CuttedName:=Copy(ThreadName, 1, 15);
-        if threadHandle=TThreadID(-1) then
-        begin
-          pthread_setname_np(pthread_self(), @CuttedName[1]);
-        end
-        else
-        begin
-          pthread_setname_np(pthread_t(threadHandle), @CuttedName[1]);
-        end;
-      end;
-{$else}
-       {$Warning SetThreadDebugName needs to be implemented}
-{$endif}
-    end;
-
-
-  procedure CSetThreadDebugNameU(threadHandle: TThreadID; const ThreadName: UnicodeString);
-    begin
-{$if defined(Linux) or defined(Android)}
-  {$ifdef dynpthreads}
-      if Assigned(pthread_setname_np) then
-  {$endif dynpthreads}
-      begin
-        CSetThreadDebugNameA(threadHandle, AnsiString(ThreadName));
-      end;
-{$else}
-       {$Warning SetThreadDebugName needs to be implemented}
-{$endif}
     end;
 
 
@@ -994,8 +938,6 @@ begin
     ThreadSetPriority      :=@CThreadSetPriority;
     ThreadGetPriority      :=@CThreadGetPriority;
     GetCurrentThreadId     :=@CGetCurrentThreadId;
-    SetThreadDebugNameA    :=@CSetThreadDebugNameA;
-    SetThreadDebugNameU    :=@CSetThreadDebugNameU;
     InitCriticalSection    :=@CInitCriticalSection;
     DoneCriticalSection    :=@CDoneCriticalSection;
     EnterCriticalSection   :=@CEnterCriticalSection;

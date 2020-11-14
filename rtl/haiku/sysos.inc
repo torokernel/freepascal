@@ -108,13 +108,15 @@ end;
 *****************************************************************************}
 
 Function Do_IsDevice(Handle:Longint):boolean;
-var
-  StatRec: Stat;
+{
+  Interface to Unix ioctl call.
+  Performs various operations on the filedescriptor Handle.
+  Ndx describes the operation to perform.
+  Data points to data needed for the Ndx function. The structure of this
+  data is function-dependent.
+}
 begin
-  fpFStat (Handle, StatRec);
-  case StatRec.st_Mode and S_IFMT of
-   S_IFCHR, S_IFIFO, S_IFSOCK: Do_IsDevice := true
-  else
-   Do_IsDevice := false;
-  end;
+  do_isdevice:= (handle=StdInputHandle) or
+                (handle=StdOutputHandle) or
+                (handle=StdErrorHandle);
 end;

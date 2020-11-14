@@ -15,8 +15,7 @@ unit buildrtl;
       cpu,
 {$endif}
       charset, cpall, getopts,
-      character, fpwidestring, unicodedata, unicodenumtable,
-      softfpu, sfpux80, ufloatx80, sfpu128, ufloat128;
+      character, fpwidestring, unicodedata, unicodenumtable;
 
   implementation
 

@@ -42,9 +42,6 @@ var
   newStack: Pointer;
   newStackAligned: Pointer;
 begin
-  // prevent removal of the __abox__ symbol by --gc-sections
-  abox_signature := 1;
-  //
   MOS_ExecBase:=realExecBase;
 
   newStack:=AllocVecTaskPooled(StkLen+16);

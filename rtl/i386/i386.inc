@@ -67,13 +67,13 @@ procedure fpc_cpuinit;
   end;
 
 {$ifndef darwin}
-procedure fpc_geteipasebx; [public, alias: 'fpc_geteipasebx'];assembler; nostackframe;
+function fpc_geteipasebx : pointer; [public, alias: 'fpc_geteipasebx'];assembler; nostackframe;
 asm
   movl    (%esp),%ebx
 end;
 
 
-procedure fpc_geteipasecx; [public, alias: 'fpc_geteipasecx'];assembler; nostackframe;
+function fpc_geteipasecx : pointer; [public, alias: 'fpc_geteipasecx'];assembler; nostackframe;
 asm
   movl    (%esp),%ecx
 end;
@@ -1298,14 +1298,6 @@ const
   FPU_StackUnderflow = $20;
   FPU_StackOverflow = $40;
   FPU_ExceptionMask = $ff;
-
-  MM_Invalid = 1;
-  MM_Denormal = 2;
-  MM_DivisionByZero = 4;
-  MM_Overflow = 8;
-  MM_Underflow = $10;
-  MM_Precicion = $20;
-  MM_ExceptionMask = $3f;
 
   MM_MaskInvalidOp = %0000000010000000;
   MM_MaskDenorm    = %0000000100000000;

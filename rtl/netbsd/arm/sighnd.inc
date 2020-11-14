@@ -33,7 +33,7 @@ begin
     res:=0;
     if signo = SIGFPE then
      begin
-        res := 208;
+        res := 200;
      end
     else
     if (signo = SIGILL) or (signo = SIGBUS) or (signo = SIGSEGV) then

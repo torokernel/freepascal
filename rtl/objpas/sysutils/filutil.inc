@@ -40,7 +40,7 @@ begin
 end;
 
 
-Function FileAge (Const FileName : UnicodeString): Int64;
+Function FileAge (Const FileName : UnicodeString): Longint;
 begin
   Result:=FileAge(ToSingleByteFileSystemEncodedFileName(FileName));
 end;
@@ -92,7 +92,7 @@ end;
 
 
 {$ifdef OS_FILESETDATEBYNAME}
-Function FileSetDate (Const FileName : UnicodeString;Age : Int64) : Longint;
+Function FileSetDate (Const FileName : UnicodeString;Age : Longint) : Longint;
 begin
   Result:=FileSetDate(ToSingleByteFileSystemEncodedFileName(FileName),Age);
 end;
@@ -119,35 +119,9 @@ begin
 end;
 
 
-function FileAgeUTC(const FileName: RawByteString; out FileDateTimeUTC: TDateTime; FollowLink: Boolean = True): Boolean;
-Var
-  Info : TRawByteSearchRec;
-  A : Integer;
-begin
-  for A:=1 to Length(FileName) do
-    if CharInSet(FileName[A],['?','*']) then
-      Exit(False);
-  A:=0;
-  if not FollowLink then
-    A:=A or faSymLink;
-  Result:=FindFirst(FileName,A,Info)=0;
-  if Result then
-    begin
-      FileDateTimeUTC:=FileDateToUniversal(Info.Time);
-      FindClose(Info);
-    end;
-end;
-
-
 Function FileAge(const FileName: UnicodeString; out FileDateTime: TDateTime; FollowLink: Boolean = True): Boolean;
 begin
   Result:=FileAge(ToSingleByteFileSystemEncodedFileName(FileName),FileDateTime,FollowLink);
-end;
-
-
-Function FileAgeUTC(const FileName: UnicodeString; out FileDateTimeUTC: TDateTime; FollowLink: Boolean = True): Boolean;
-begin
-  Result:=FileAgeUTC(ToSingleByteFileSystemEncodedFileName(FileName),FileDateTimeUTC,FollowLink);
 end;
 
 
@@ -283,7 +257,7 @@ begin
 end;
 
 
-Function FileAge (Const FileName : RawByteString): Int64;
+Function FileAge (Const FileName : RawByteString): Longint;
 begin
   Result:=FileAge(UnicodeString(FileName));
 end;
@@ -332,7 +306,7 @@ end;
 {$endif}
 
 {$ifdef OS_FILESETDATEBYNAME}
-Function FileSetDate (Const FileName : RawByteString;Age : Int64) : Longint;
+Function FileSetDate (Const FileName : RawByteString;Age : Longint) : Longint;
 begin
   Result:=FileSetDate(UnicodeString(FileName),Age);
 end;
@@ -354,28 +328,7 @@ begin
   Result:=FindFirst(FileName,A,Info)=0;
   if Result then
     begin
-      FileDateTime:=Info.TimeStamp;
-      FindClose(Info);
-    end;
-end;
-
-
-function FileAgeUTC(const FileName: UnicodeString; out FileDateTimeUTC: TDateTime; FollowLink: Boolean = True): Boolean;
-Var
-  Info : TUnicodeSearchRec;
-  A : Integer;
-
-begin
-  for A:=1 to Length(FileName) do
-    if CharInSet(FileName[A],['?','*']) then
-      Exit(False);
-  A:=0;
-  if not FollowLink then
-    A:=A or faSymLink;
-  Result:=FindFirst(FileName,A,Info)=0;
-  if Result then
-    begin
-      FileDateTimeUTC:=Info.TimeStampUTC;
+      FileDateTime:=FileDatetoDateTime(Info.Time);
       FindClose(Info);
     end;
 end;
@@ -384,12 +337,6 @@ end;
 Function FileAge(const FileName: RawbyteString; out FileDateTime: TDateTime; FollowLink: Boolean = True): Boolean;
 begin
   Result:=FileAge(UnicodeString(FileName),FileDateTime,FollowLink);
-end;
-
-
-function FileAgeUTC(const FileName: RawByteString; out FileDateTimeUTC: TDateTime; FollowLink: Boolean = True): Boolean;
-begin
-  Result:=FileAgeUTC(UnicodeString(FileName),FileDateTimeUTC,FollowLink);
 end;
 
 
@@ -537,7 +484,7 @@ end;
 
 type
   TAbstractSearchRec = Record
-    Time : Int64;
+    Time : Longint;
     Size : Int64;
     Attr : Longint;
     { this will be assigned by the generic code; it is actually either a
@@ -655,86 +602,50 @@ begin
   InternalFindClose(f.FindHandle{$ifdef SEARCHREC_USEFINDDATA},f.FindData{$endif});
 end;
 
-{$if defined(windows) and not defined(win16)}
-function FindDataTimeToDateTime(constref aFileTime: FILETIME; out aResult: TDateTime): Boolean;
-var
-  st, lt: TSystemTime;
-begin
-  Result := FileTimeToSystemTime(aFileTime, st);
-  if Result then begin
-{$ifndef wince}
-    if SystemTimeToTzSpecificLocalTime(Nil, st, lt) then
-      aResult := SystemTimeToDateTime(lt)
-    else
-{$endif}
-      aResult := SystemTimeToDateTime(st);
-  end;
-end;
-
-function FindDataTimeToUTC(constref aFileTime: FILETIME; out aResult: TDateTime): Boolean;
-var
-  st: TSystemTime;
-begin
-  Result := FileTimeToSystemTime(aFileTime, st);
-  if Result then
-    aResult := SystemTimeToDateTime(st);
-end;
-{$endif}
-
 { TUnicodeSearchRec }
 
 function TUnicodeSearchRec.GetTimeStamp: TDateTime;
 begin
-{$if declared(FindDataTimeToDateTime)}
-  if not FindDataTimeToDateTime(FindData.ftLastWriteTime, Result) then
-{$endif}
-    Result := FileDateToDateTime(Time);
-end;
-
-function TUnicodeSearchRec.GetTimeStampUTC: TDateTime;
-begin
-{$if declared(FindDataTimeToUTC)}
-  if not FindDataTimeToUTC(FindData.ftLastWriteTime, Result) then
-{$endif}
-    Result := FileDateToUniversal(Time);
+  Result := FileDateToDateTime(Time);
 end;
 
 { TRawbyteSearchRec }
 
 function TRawbyteSearchRec.GetTimeStamp: TDateTime;
 begin
-{$if declared(FindDataTimeToDateTime)}
-  if not FindDataTimeToDateTime(FindData.ftLastWriteTime, Result) then
-{$endif}
-    Result := FileDateToDateTime(Time);
-end;
-
-function TRawbyteSearchRec.GetTimeStampUTC: TDateTime;
-begin
-{$if declared(FindDataTimeToDateTime)}
-  if not FindDataTimeToUTC(FindData.ftLastWriteTime, Result) then
-{$endif}
-    Result := FileDateToUniversal(Time);
+  Result := FileDateToDateTime(Time);
 end;
 
 { TUnicodeSymLinkRec }
 
 function TUnicodeSymLinkRec.GetTimeStamp: TDateTime;
-begin
-{$if declared(FindDataTimeToDateTime)}
-  if not FindDataTimeToDateTime(FindData.ftLastWriteTime, Result) then
+{$if defined(win32) or defined(win64) or defined(wince)}
+var
+  st: TSystemTime;
 {$endif}
-    Result := 0;
+begin
+{$if defined(win32) or defined(win64) or defined(wince)}
+  FileTimeToSystemTime(FindData.ftLastWriteTime, st);
+  Result := SystemTimeToDateTime(st);
+{$else}
+  Result := 0;
+{$endif}
 end;
 
 { TRawbyteSymLinkRec }
 
 function TRawbyteSymLinkRec.GetTimeStamp: TDateTime;
-begin
-{$if declared(FindDataTimeToDateTime)}
-  if not FindDataTimeToDateTime(FindData.ftLastWriteTime, Result) then
+{$if defined(win32) or defined(win64) or defined(wince)}
+var
+  st: TSystemTime;
 {$endif}
-    Result := 0;
+begin
+{$if defined(win32) or defined(win64) or defined(wince)}
+  FileTimeToSystemTime(FindData.ftLastWriteTime, st);
+  Result := SystemTimeToDateTime(st);
+{$else}
+  Result := 0;
+{$endif}
 end;
 
 
@@ -744,134 +655,3 @@ begin
   Result:= False;
 end;
 {$endif}
-
-Function GetFileContents(Const aFileName : RawByteString) : TBytes;
-
-Var
-  H : Thandle;
-
-begin
-  H:=FileOpen(aFileName,fmOpenRead or fmShareDenyWrite);
-  if H<0 then
-    Raise EFileNotFoundException.Create(SFileNotFound);
-  try
-    Result:=GetFileContents(H);
-  finally
-    FileClose(H);
-  end;
-end;
-
-Function GetFileContents(Const aFileName : UnicodeString) : TBytes;
-
-Var
-  H : Thandle;
-
-begin
-  H:=FileOpen(aFileName,fmOpenRead or fmShareDenyWrite);
-  if H<0 then
-    Raise EFileNotFoundException.Create(SFileNotFound);
-  try
-    Result:=GetFileContents(H);
-  finally
-    FileClose(H);
-  end;
-end;
-
-Function GetFileContents(Const aHandle : THandle) : TBytes;
-
-Var
-  aLen,aOffset,aRead : Int64;
-  aBuf : PByte;
-
-begin
-  aLen:=FileSeek(aHandle,0,fsFromEnd);
-  if aLen<0 then
-    Raise EInOutError.Create(SSeekFailed);
-  if FileSeek(aHandle,0,fsFromBeginning)<0 then
-    Raise EInOutError.Create(SSeekFailed);
-  SetLength(Result,aLen);
-  aOffset:=0;
-  Repeat
-    aBuf:=@Result[aOffset];
-    aRead:=FileRead(aHandle,aBuf^,aLen-aOffset);
-    aOffset:=aOffset+aRead;
-  Until (aOffset>=aLen) or (aRead<=0);
-  if aRead<0 then
-    RaiseLastOSError;
-end;
-
-Function GetFileAsString(Const aFileName : RawByteString; aEncoding : TEncoding) : RawByteString;
-
-begin
-  Result:=aEncoding.GetAnsiString(GetFileContents(aFileName));
-end;
-
-Function GetFileAsString(Const aFileName : RawByteString) : RawByteString;
-
-begin
-  Result:=GetFileAsString(aFileName,TEncoding.SystemEncoding);
-end;
-
-Function GetFileAsString(Const aFileName : UnicodeString) : UnicodeString;
-begin
-  Result:=GetFileAsString(aFileName, TEncoding.Unicode);
-end;
-
-Function GetFileAsString(Const aFileName : UnicodeString; aEncoding : TEncoding) : UnicodeString;
-begin
-  Result:=aEncoding.GetString(GetFileContents(aFileName))
-end;
-
-{$IFNDEF HAS_FILEDATETIME}
-Function FileGetDate (Handle : THandle; out FileDateTime: TDateTime) : Boolean;
-Var
-  aDate : Int64;
-begin
-  aDate:=FileGetDate(Handle);
-  Result:=aDate>=0;
-  if Result then
-    FileDateTime:=FileDateToDateTime(aDate);
-end;
-
-Function FileGetDateUTC (Handle : THandle; out FileDateTimeUTC: TDateTime) : Boolean;
-Var
-  aDate : Int64;
-begin
-  aDate:=FileGetDate(Handle);
-  Result:=aDate>=0;
-  if Result then
-    FileDateTimeUTC:=FileDateToUniversal(aDate);
-end;
-
-Function FileSetDate (Handle : THandle; const FileDateTime: TDateTime) : Longint;
-begin
-  Result := FileSetDate(Handle,DateTimeToFileDate(FileDateTime));
-end;
-
-Function FileSetDateUTC (Handle : THandle; const FileDateTimeUTC: TDateTime) : Longint;
-begin
-  Result := FileSetDate(Handle,UniversalToFileDate(FileDateTimeUTC));
-end;
-
-
-Function FileSetDate (Const FileName : UnicodeString;const FileDateTime : TDateTime) : Longint;
-begin
-  Result:=FileSetDate(FileName,DateTimeToFileDate(FileDateTime));
-end;
-
-Function FileSetDateUTC (Const FileName : UnicodeString;const FileDateTimeUTC : TDateTime) : Longint;
-begin
-  Result:=FileSetDate(FileName,UniversalToFileDate(FileDateTimeUTC));
-end;
-
-{$ENDIF}
-
-Function FileSetDate (Const FileName : RawByteString;const FileDateTime : TDateTime) : Longint;
-begin
-  Result:=FileSetDate(UnicodeString(FileName),FileDateTime);
-end;
-
-Function FileSetDateUTC (Const FileName : RawByteString;const FileDateTimeUTC : TDateTime) : Longint;
-begin
-  Result:=FileSetDateUTC(UnicodeString(FileName),FileDateTimeUTC);
-end;

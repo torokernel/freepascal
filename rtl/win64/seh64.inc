@@ -22,11 +22,6 @@ const
 
   UNW_FLAG_NHANDLER         = 0;
 
-{$ifdef CPUAARCH64}
-  ARM64_MAX_BREAKPOINTS     = 8;
-  ARM64_MAX_WATCHPOINTS     = 2;
-{$endif CPUAARCH64}
-
 type
   PM128A=^M128A;
   M128A = record
@@ -35,8 +30,6 @@ type
   end;
 
   PContext = ^TContext;
-
-{$if defined(CPUX86_64)}
   TContext = record
     P1Home : QWord;
     P2Home : QWord;
@@ -109,59 +102,7 @@ type
     FloatingContext: array[0..15] of PM128A;
     IntegerContext: array[0..15] of PQWord;
   end;
-{$elseif defined(CPUAARCH64)}
-  TContext = record
-    ContextFlags: DWord;
-    Cpsr: DWord;
-    X0: QWord;
-    X1: QWord;
-    X2: QWord;
-    X3: QWord;
-    X4: QWord;
-    X5: QWord;
-    X6: QWord;
-    X7: QWord;
-    X8: QWord;
-    X9: QWord;
-    X10: QWord;
-    X11: QWord;
-    X12: QWord;
-    X13: QWord;
-    X14: QWord;
-    X15: QWord;
-    X16: QWord;
-    X17: QWord;
-    X18: QWord;
-    X19: QWord;
-    X20: QWord;
-    X21: QWord;
-    X22: QWord;
-    X23: QWord;
-    X24: QWord;
-    X25: QWord;
-    X26: QWord;
-    X27: QWord;
-    X28: QWord;
-    Fp: QWord;
-    Lr: QWord;
-    Sp: QWord;
-    Pc: QWord;
-    V: array[0..31] of M128A;
-    Fpcr: DWord;
-    Fpsr: DWord;
-    Bcr: array[0..ARM64_MAX_BREAKPOINTS-1] of DWord;
-    Bvr: array[0..ARM64_MAX_BREAKPOINTS-1] of QWord;
-    Wcr: array[0..ARM64_MAX_WATCHPOINTS-1] of DWord;
-    Wvr: array[0..ARM64_MAX_WATCHPOINTS-1] of QWord;
-  end;
 
-  { This is a simplified definition, only array part of unions }
-  PKNONVOLATILE_CONTEXT_POINTERS=^KNONVOLATILE_CONTEXT_POINTERS;
-  KNONVOLATILE_CONTEXT_POINTERS=record
-    IntegerContext: array[0..12] of PQWord;
-    FloatingContext: array[0..7] of PM128A;
-  end;
-{$endif NOT (X86_64 or AARCH64)}
 
   PExceptionPointers = ^TExceptionPointers;
   TExceptionPointers = record
@@ -177,18 +118,11 @@ type
     DispatcherContext: Pointer ): EXCEPTION_DISPOSITION;
 
   PRUNTIME_FUNCTION=^RUNTIME_FUNCTION;
-{$if defined(CPUX86_64)}
   RUNTIME_FUNCTION=record
     BeginAddress: DWORD;
     EndAddress: DWORD;
     UnwindData: DWORD;
   end;
-{$elseif defined(CPUAARCH64)}
-  RUNTIME_FUNCTION=record
-    BeginAddress: DWORD;
-    UnwindData: DWORD;
-  end;
-{$endif}
 
   UNWIND_HISTORY_TABLE_ENTRY=record
     ImageBase: QWord;
@@ -219,12 +153,7 @@ type
     HandlerData: Pointer;
     HistoryTable: PUNWIND_HISTORY_TABLE;
     ScopeIndex: DWord;
-{$if defined(CPUX86_64)}
     Fill0: DWord;
-{$elseif defined(CPUAARCH64)}
-    ControlPCIsUnwound: Byte;
-    NonVolatileRegisters: PByte;
-{$endif}
   end;
 
 procedure RtlCaptureContext(var ctx: TContext); stdcall;
@@ -265,35 +194,7 @@ procedure RtlUnwindEx(
 
 
 { FPC specific stuff }
-{$ifdef SYSTEM_USE_WIN_SEH}
-
-function ContextGetIP(const Context: TContext): PtrUInt; inline;
-begin
-{$if defined(CPUX86_64)}
-  Result := Context.Rip;
-{$elseif defined(CPUAARCH64)}
-  Result := Context.Pc;
-{$endif}
-end;
-
-procedure ContextSetIP(var Context: TContext; IP: PtrUInt); inline;
-begin
-{$if defined(CPUX86_64)}
-  Context.Rip := IP;
-{$elseif defined(CPUAARCH64)}
-  Context.Pc := IP;
-{$endif}
-end;
-
-function ContextGetFP(const Context: TContext): PtrUInt; inline;
-begin
-{$if defined(CPUX86_64)}
-  Result := Context.Rbp;
-{$elseif defined(CPUAARCH64)}
-  Result := Context.Fp;
-{$endif}
-end;
-
+{$ifdef FPC_USE_WIN64_SEH}
 const
   SCOPE_FINALLY=0;
   SCOPE_CATCHALL=1;
@@ -335,26 +236,18 @@ begin
   FrameBufSize:=0;
   Frames:=nil;
   repeat
-    RuntimeFunction:=RtlLookupFunctionEntry(ContextGetIP(Context), ImageBase, @UnwindHistory);
+    RuntimeFunction:=RtlLookupFunctionEntry(Context.Rip, ImageBase, @UnwindHistory);
 
     if Assigned(RuntimeFunction) then
-      RtlVirtualUnwind(UNW_FLAG_NHANDLER, ImageBase, ContextGetIP(Context),
+      RtlVirtualUnwind(UNW_FLAG_NHANDLER, ImageBase, Context.Rip,
         RuntimeFunction, Context, @HandlerData, @EstablisherFrame, nil)
     else  { a leaf function }
     begin
-{$if defined(CPUX86_64)}
       Context.Rip:=PQWord(Context.Rsp)^;
       Inc(Context.Rsp, sizeof(Pointer));
-{$elseif defined(CPUAARCH64)}
-      { ToDo }
-      //Context.Pc:=Context.Lr;
-      ContextSetIP(Context,0);
-{$else}
-      ContextSetIP(Context,0);
-{$endif}
     end;
 
-    if (ContextGetIP(Context)=0) or (FrameCount>=RaiseMaxFrameCount) then
+    if (Context.Rip=0) or (FrameCount>=RaiseMaxFrameCount) then
       break;
 
     { The StartingFrame provides a way to skip several initial calls.
@@ -363,14 +256,14 @@ begin
       even in optimized code (i.e. without rbp-based frames). But that's
       limited by factors such as 'raise' syntax. }
 
-    if (Pointer(ContextGetFP(Context))>StartingFrame) or (FrameCount>0) then
+    if (Pointer(Context.Rbp)>StartingFrame) or (FrameCount>0) then
     begin
       if (FrameCount>=FrameBufSize) then
         begin
           Inc(FrameBufSize,16);
           ReallocMem(Frames,FrameBufSize*sizeof(Pointer));
         end;
-      Frames[FrameCount]:=Pointer(ContextGetIP(Context));
+      Frames[FrameCount]:=Pointer(Context.Rip);
       Inc(FrameCount);
     end;
   until False;
@@ -378,13 +271,11 @@ begin
 end;
 
 
-function RunErrorCodeSEH(const rec: TExceptionRecord; const context: TContext): Longint;
+function RunErrorCodex64(const rec: TExceptionRecord; const context: TContext): Longint;
 begin
   result:=RunErrorCode(rec);
-{$if defined(CPUX86_64)}
   if (result=-255) then
     TranslateMxcsr(context.MxCsr,result);
-{$endif}
 end;
 
 
@@ -456,7 +347,7 @@ begin
   begin
     Obj:=nil;
     Result:=False;
-    code:=RunErrorCodeSEH(rec,context);
+    code:=RunErrorCodex64(rec,context);
     if Assigned(ExceptObjProc) then
       Obj:=TObject(TExceptObjProc(ExceptObjProc)(abs(code),rec));
     if (Obj=nil) and (not AcceptNull) then
@@ -495,14 +386,12 @@ var
 begin
   if (rec.ExceptionFlags and EXCEPTION_UNWIND)=0 then
   begin
-{$ifdef CPUX86_64}
     { Athlon prefetch bug? }
-    if (rec.ExceptionCode=STATUS_ACCESS_VIOLATION) and is_prefetch(pointer(ContextGetIP(Context))) then
+    if (rec.ExceptionCode=STATUS_ACCESS_VIOLATION) and is_prefetch(pointer(Context.rip)) then
     begin
       result:=ExceptionContinueExecution;
       exit;
     end;
-{$endif CPUX86_64}
     PushException(rec,context,obj,True);
     RtlUnwindEx(frame, @L1, @rec, nil, dispatch.ContextRecord, dispatch.HistoryTable);
   end
@@ -512,7 +401,7 @@ begin
     if Exc^.FObject=nil then
     begin
       hstdout:=@stdout;
-      code:=abs(RunErrorCodeSEH(rec,context));
+      code:=abs(RunErrorCodex64(rec,context));
       Writeln(hstdout^,'Runtime error ',code,' at $',hexstr(Exc^.addr));
       Writeln(hstdout^,BackTraceStrFunc(Exc^.Addr));
       if (Exc^.FrameCount>0) then
@@ -587,18 +476,16 @@ begin
       else if (ControlRva>=scope^.RvaStart) and (ControlRva<scope^.RvaEnd) and
         (scope^.Typ<>SCOPE_FINALLY)then
       begin
-{$ifdef CPUX86_64}
         { Athlon prefetch bug? }
-        if (rec.ExceptionCode=STATUS_ACCESS_VIOLATION) and is_prefetch(pointer(ContextGetIP(Context))) then
+        if (rec.ExceptionCode=STATUS_ACCESS_VIOLATION) and is_prefetch(pointer(Context.rip)) then
         begin
           result:=ExceptionContinueExecution;
           exit;
         end;
-{$endif CPUX86_64}
 
         if scope^.Typ>SCOPE_IMPLICIT then  // filtering needed
         begin
-          TargetAddr:=FilterException(rec,dispatch.ImageBase,scope^.Typ,abs(RunErrorCodeSEH(rec,context)));
+          TargetAddr:=FilterException(rec,dispatch.ImageBase,scope^.Typ,abs(RunErrorCodex64(rec,context)));
           if TargetAddr=nil then
           begin
             Inc(ScopeIdx);
@@ -648,11 +535,11 @@ begin
         if IsConsole then
           writeln(stderr,'calling handler @',hexstr(dispatch.imagebase+scope^.RvaHandler,16));
 {$endif DEBUG_SEH}
-        TUnwindProc(dispatch.ImageBase+scope^.RvaHandler)(ContextGetFP(context));
+        TUnwindProc(dispatch.ImageBase+scope^.RvaHandler)(context.rbp);
       end;
       Inc(ScopeIdx);
     end;
   end;
 end;
-{$endif SYSTEM_USE_WIN_SEH}
+{$endif FPC_USE_WIN64_SEH}
 

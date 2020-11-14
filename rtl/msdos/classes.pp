@@ -25,7 +25,6 @@
 {$else}
   {$fatal Unknown i8086 memory model.}
 {$endif}
-{$hugecode on}
 
 unit Classes;
 
@@ -35,7 +34,6 @@ uses
   typinfo,
   rtlconsts,
   types,
-  sortbase,
 {$if defined(FPC_TESTGENERICS) or defined(FPC_CODEPOINTER_DIFFERENT_THAN_POINTER)}
   fgl,
 {$endif}

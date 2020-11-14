@@ -57,13 +57,12 @@
 
     const
       TinyHeapMinBlock = sizeof(TTinyHeapBlock);
-      TinyHeapMaxBlock = High(ptruint) - sizeof(TTinyHeapBlock) - sizeof(TTinyHeapMemBlockSize);
 
       TinyHeapAllocGranularity = sizeof(TTinyHeapBlock);
 
     procedure RegisterTinyHeapBlock(AAddress: Pointer; ASize:{$ifdef FPC_TINYHEAP_HUGE}LongInt{$else}PtrUInt{$endif}); forward;
 
-    function EncodeTinyHeapFreeBlockSize(Size: PtrUInt): TTinyHeapFreeBlockSize; {$ifndef FPC_TINYHEAP_HUGE} inline; {$endif}
+    function EncodeTinyHeapFreeBlockSize(Size: PtrUInt): TTinyHeapFreeBlockSize; inline;
       begin
 {$ifdef FPC_TINYHEAP_HUGE}
         EncodeTinyHeapFreeBlockSize.OfsSize := Size and 15;
@@ -73,7 +72,7 @@
 {$endif FPC_TINYHEAP_HUGE}
       end;
 
-    function DecodeTinyHeapFreeBlockSize(Size: TTinyHeapFreeBlockSize): PtrUInt; {$ifndef FPC_TINYHEAP_HUGE} inline; {$endif}
+    function DecodeTinyHeapFreeBlockSize(Size: TTinyHeapFreeBlockSize): PtrUInt; inline;
       begin
 {$ifdef FPC_TINYHEAP_HUGE}
         DecodeTinyHeapFreeBlockSize := (PtrUInt(Size.SegSize) shl 4) + Size.OfsSize;
@@ -97,8 +96,6 @@
 {$ifdef DEBUG_TINY_HEAP}
         Write('SysGetMem(', Size, ')=');
 {$endif DEBUG_TINY_HEAP}
-        if size>TinyHeapMaxBlock then
-          HandleError(203);
         AllocSize := align(size+sizeof(TTinyHeapMemBlockSize), TinyHeapAllocGranularity);
 
         p := FreeList;
@@ -323,8 +320,6 @@
             if (TTinyHeapPointerArithmeticType(p) < TTinyHeapPointerArithmeticType(HeapOrg)) or
                (TTinyHeapPointerArithmeticType(p) >= TTinyHeapPointerArithmeticType(HeapPtr)) then
               HandleError(204);
-            if size>TinyHeapMaxBlock then
-              HandleError(203);
             oldsize := FindSize(p);
             OldAllocSize := align(oldsize+sizeof(TTinyHeapMemBlockSize), TinyHeapAllocGranularity);
             NewAllocSize := align(size+sizeof(TTinyHeapMemBlockSize), TinyHeapAllocGranularity);

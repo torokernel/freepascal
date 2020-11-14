@@ -127,7 +127,7 @@ begin
   Result:=GetProcedureAddress(Lib,Procname);
 end;
 
-Procedure GetDynLibsManager (Out Manager : TDynLibsManager);
+Procedure GetDynLibsManager (Var Manager : TDynLibsManager);
 begin
   Manager:=CurrentDLM;
 end;
@@ -138,7 +138,7 @@ begin
 end;
 
 
-Procedure SetDynLibsManager (Const New : TDynLibsManager; Out Old: TDynLibsManager);
+Procedure SetDynLibsManager (Const New : TDynLibsManager; Var Old: TDynLibsManager);
 begin
   Old:=CurrentDLM;
   CurrentDLM:=New;

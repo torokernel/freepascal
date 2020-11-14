@@ -296,15 +296,9 @@ end;
 
 
 function do_isdevice(handle: THandle): boolean;
-var
-  StatRec: TStat;
 begin
-  FStat (Handle, StatRec);
-  case StatRec.st_Mode and _IFMT of
-   _IFCHR, _IFIFO, _IFSOCK: Do_IsDevice := true
-  else
-   Do_IsDevice := false;
-  end;
+  //result :=  (isatty(fileno(P_FILE(handle))) > 0);
+  do_isdevice := (_isatty(handle) > 0);
 end;
 
 

@@ -68,8 +68,7 @@ const
   SInvalidBoolean        = '"%s" is not a valid boolean.';
   SInvalidCast           = 'Invalid type cast';
   SinvalidCurrency       = 'Invalid currency: "%s"';
-  SInvalidDateTime       = '"%s" is not a valid date/time value.';
-  SInvalidDateTimeFloat  = '%f is not a valid date/time value.';
+  SInvalidDateTime       = '%f is not a valid date/time value.';
   SInvalidDrive          = 'Invalid drive specified';
   SInvalidFileHandle     = 'Invalid file handle';
   SInvalidFloat          = '"%s" is an invalid float';
@@ -100,7 +99,6 @@ const
   SSafecallException     = 'Exception in safecall method';
   SiconvError            = 'iconv error';
   SThreadError           = 'Thread error';
-  SSeekFailed            = 'Seek operation failed';
 
   STooManyOpenFiles      = 'Too many open files';
   SUnKnownRunTimeError   = 'Unknown Run-Time error : %3.3d';

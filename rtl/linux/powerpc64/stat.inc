@@ -43,7 +43,5 @@
       st_mtime_nsec : cULong;
       st_ctime : cULong;
       st_ctime_nsec : cULong;
-      __unused4 : culong;
-      __unused5 : culong;
-      __unused6 : culong;
+      __unused : array[0..2] of cULong;
   end;

@@ -231,9 +231,6 @@ type
    procedure SetLastError(dwErrCode : DWORD);
      {$ifdef wince}cdecl{$else}stdcall{$endif};external KernelDLL name 'SetLastError';
 
-   procedure RaiseException(dwExceptionCode: DWORD; dwExceptionFlags: DWORD; dwArgCount: DWORD; lpArguments: Pointer);
-     {$ifdef wince}cdecl{$else}stdcall{$endif}; external KernelDLL name 'RaiseException';
-
    { time and date functions }
    function GetTickCount : DWORD;
      {$ifdef wince}cdecl{$else}stdcall{$endif};external KernelDLL name 'GetTickCount';
@@ -249,10 +246,15 @@ type
    function GetStdHandle(nStdHandle:DWORD):THANDLE;
      stdcall;external KernelDLL name 'GetStdHandle';
 
+   {$ifdef FPC_UNICODE_RTLx}
    { command line/environment functions }
 
-  function GetCommandLineW : pwidechar;
+   function GetCommandLine : pwidechar;
      stdcall;external KernelDLL name 'GetCommandLineW';
+   {$else}
+   function GetCommandLine : pchar;
+     stdcall;external KernelDLL name 'GetCommandLineA';
+   {$endif}
 
   function GetCurrentProcessId:DWORD;
     stdcall; external KernelDLL name 'GetCurrentProcessId';
@@ -267,8 +269,8 @@ type
     stdcall;external 'kernel32' name 'ReadProcessMemory';
 
   { module functions }
-  function GetModuleFileNameW(l1:THandle;p:PWideChar;l2:longint):longint;
-    stdcall;external KernelDLL name 'GetModuleFileNameW';
+  function GetModuleFileName(l1:THandle;p:PChar;l2:longint):longint;
+    stdcall;external KernelDLL name 'GetModuleFileNameA';
 
   function GetModuleHandle(p : PChar) : THandle;
     stdcall;external KernelDLL name 'GetModuleHandleA';

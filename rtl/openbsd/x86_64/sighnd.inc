@@ -15,7 +15,7 @@
 
 CONST FPU_ALL=$7F;
 
-{$ifdef cpux86_64}
+{$ifdef cpui386}
 function getfpustate(sininfo:psiginfo):longint; {inline;}
 begin
   if ptruint(sininfo)> high(word) then
@@ -27,7 +27,7 @@ end;
 function getaltfpustate(sigcontext:psigcontextrec):longint; {inline;}
 begin
   if assigned(sigcontext) then
-    getaltfpustate:=sigcontext^.sc_fpstate^.fx_fsw 
+    getaltfpustate:=sigcontext^.sc_fpustate^.en_sw 
   else
     getaltfpustate:=0;
 end;
@@ -40,12 +40,12 @@ var
 begin
   res:=0;
 {$ifdef BSD}
-{$ifdef cpux86_64}
+{$ifdef cpui386}
   fpustate:=0;
   asm
     fnstsw fpustate
   end;
-{$endif cpux86_64}
+{$endif cpui386}
 {$endif BSD}
   case sig of
     SIGFPE :
@@ -53,7 +53,7 @@ begin
     { this is not allways necessary but I don't know yet
       how to tell if it is or not PM }
           res:=200;
-{$ifdef cpux86_64}
+{$ifdef cpui386}
           fpustate:=GetaltFPUState(sigcontext);
 {$else}
           fpustate:=0;
@@ -62,17 +62,17 @@ begin
             begin
               { first check the more precise options }
               if (FpuState and FPU_DivisionByZero)<>0 then
-                res:=208
+                res:=200
               else if (FpuState and FPU_Overflow)<>0 then
                 res:=205
               else if (FpuState and FPU_Underflow)<>0 then
                 res:=206
               else if (FpuState and FPU_Denormal)<>0 then
-                res:=207
+                res:=216
               else if (FpuState and (FPU_StackOverflow or FPU_StackUnderflow))<>0 then
                 res:=207
               else if (FpuState and FPU_Invalid)<>0 then
-                res:=207
+                res:=216
               else
                 res:=207;  {'Coprocessor Error'}
             end;

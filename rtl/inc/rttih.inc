@@ -37,10 +37,8 @@ const
   tkWideString = tkWString;
   tkUnicodeString = tkUString;
 
-{$ifdef FPC_HAS_FEATURE_RTTI}
 procedure InitializeArray(p, typeInfo: Pointer; count: SizeInt);
 procedure FinalizeArray(p, typeInfo: Pointer; count: SizeInt);
 procedure CopyArray(dest, source, typeInfo: Pointer; count: SizeInt);
-{$endif FPC_HAS_FEATURE_RTTI}
 
 

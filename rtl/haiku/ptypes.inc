@@ -164,8 +164,7 @@ type
   end;
 
   pthread_mutexattr_t = record
-    __mutexkind: cint32;
-    process_shared: cbool;
+    __mutexkind: cint;
   end;
 
   pthread_cond_t = record

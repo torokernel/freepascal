@@ -137,15 +137,27 @@ end;
 *****************************************************************************}
 
 Function Do_IsDevice(Handle:THandle):boolean;
+{
+  Interface to Unix ioctl call.
+  Performs various operations on the filedescriptor Handle.
+  Ndx describes the operation to perform.
+  Data points to data needed for the Ndx function. The structure of this
+  data is function-dependent.
+}
+const
+{$if defined(cpupowerpc) or defined(cpupowerpc64)}
+  IOCtl_TCGETS=$402c7413;
+{$else}
+{$if defined(cpusparc) or defined(cpusparc64)}
+  IOCtl_TCGETS=$40245408;
+{$else}
+  IOCtl_TCGETS=$5401; // TCGETS is also in termios.inc, but the sysunix needs only this
+{$endif}
+{$endif}
 var
-  StatRec: Stat;
+  Data : array[0..255] of byte; {Large enough for termios info}
 begin
-  fpFStat (Handle, StatRec);
-  case StatRec.st_Mode and S_IFMT of
-   S_IFCHR, S_IFIFO, S_IFSOCK: Do_IsDevice := true
-  else
-   Do_IsDevice := false;
-  end;
+  Do_IsDevice:=(Fpioctl(handle,IOCTL_TCGETS,@data)<>-1);
 end;
 
 

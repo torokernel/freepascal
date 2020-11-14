@@ -404,7 +404,6 @@ function do_isdevice(handle:THandle):boolean;
 var
   regs: Registers;
 begin
-(* Is this explicit check for the first three handles appropriate here??? *)
   if (handle=StdInputHandle) or (handle=StdOutputHandle) or (handle=StdErrorHandle) then
     begin
       do_isdevice:=true;

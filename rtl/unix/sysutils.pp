@@ -293,6 +293,55 @@ procedure UnhookSignal(RtlSigNum: Integer; OnlyIfHooked: Boolean = True);
 { Include SysCreateGUID function }
 {$i suuid.inc}
 
+Const
+{Date Translation}
+  C1970=2440588;
+  D0   =   1461;
+  D1   = 146097;
+  D2   =1721119;
+
+
+Procedure JulianToGregorian(JulianDN:LongInt;Var Year,Month,Day:Word);
+Var
+  YYear,XYear,Temp,TempMonth : LongInt;
+Begin
+  Temp:=((JulianDN-D2) shl 2)-1;
+  JulianDN:=Temp Div D1;
+  XYear:=(Temp Mod D1) or 3;
+  YYear:=(XYear Div D0);
+  Temp:=((((XYear mod D0)+4) shr 2)*5)-3;
+  Day:=((Temp Mod 153)+5) Div 5;
+  TempMonth:=Temp Div 153;
+  If TempMonth>=10 Then
+   Begin
+     inc(YYear);
+     dec(TempMonth,12);
+   End;
+  inc(TempMonth,3);
+  Month := TempMonth;
+  Year:=YYear+(JulianDN*100);
+end;
+
+
+
+Procedure EpochToLocal(epoch:longint;var year,month,day,hour,minute,second:Word);
+{
+  Transforms Epoch time into local time (hour, minute,seconds)
+}
+Var
+  DateNum: LongInt;
+Begin
+  inc(Epoch,TZSeconds);
+  Datenum:=(Epoch Div 86400) + c1970;
+  JulianToGregorian(DateNum,Year,Month,day);
+  Epoch:=Abs(Epoch Mod 86400);
+  Hour:=Epoch Div 3600;
+  Epoch:=Epoch Mod 3600;
+  Minute:=Epoch Div 60;
+  Second:=Epoch Mod 60;
+End;
+
+
 function GetTickCount64: QWord;
 var
   tp: TTimeVal;
@@ -547,7 +596,7 @@ begin
     end;
 end;
 
-Function FileAge (Const FileName : RawByteString): Int64;
+Function FileAge (Const FileName : RawByteString): Longint;
 Var
   Info : Stat;
   SystemFileName: RawByteString;
@@ -995,7 +1044,7 @@ Begin
 End;
 
 
-Function FileGetDate (Handle : Longint) : Int64;
+Function FileGetDate (Handle : Longint) : Longint;
 
 Var Info : Stat;
 
@@ -1007,7 +1056,7 @@ begin
 end;
 
 
-Function FileSetDate (Handle : Longint;Age : Int64) : Longint;
+Function FileSetDate (Handle,Age : Longint) : Longint;
 
 begin
   // Impossible under Linux from FileHandle !!
@@ -1065,7 +1114,7 @@ begin
   Result:=fpAccess(PChar(SystemFileName),W_OK)<>0;
 end;
 
-Function FileSetDate (Const FileName : RawByteString; Age : Int64) : Longint;
+Function FileSetDate (Const FileName : RawByteString; Age : Longint) : Longint;
 var
   SystemFileName: RawByteString;
   t: TUTimBuf;
@@ -1105,54 +1154,42 @@ var
   Drives   : byte = 4;
   DriveStr : array[4..26] of pchar;
 
-Function GetDriveStr(Drive : Byte) : Pchar;
-
+Function AddDisk(const path:string) : Byte;
 begin
-  case Drive of
-    Low(FixDriveStr)..High(FixDriveStr):
-      Result := FixDriveStr[Drive];
-    Low(DriveStr)..High(DriveStr):
-      Result := DriveStr[Drive];
-    else
-      Result := nil;
-  end;
-end;
-
-Function DiskFree(Drive: Byte): int64;
-var
-  p : PChar;
-  fs : TStatfs;
-Begin
-  p:=GetDriveStr(Drive);
-  if (p<>nil) and (fpStatFS(p, @fs)<>-1) then
-    DiskFree := int64(fs.bavail)*int64(fs.bsize)
-  else
-    DiskFree := -1;
-End;
-
-Function DiskSize(Drive: Byte): int64;
-var
-  p : PChar;
-  fs : TStatfs;
-Begin
-  p:=GetDriveStr(Drive);
-  if (p<>nil) and (fpStatFS(p, @fs)<>-1) then
-    DiskSize := int64(fs.blocks)*int64(fs.bsize)
-  else
-    DiskSize := -1;
-End;
-
-Function AddDisk(const path: string): Byte;
-begin
-  if DriveStr[Drives]<>nil then
+  if not (DriveStr[Drives]=nil) then
    FreeMem(DriveStr[Drives]);
   GetMem(DriveStr[Drives],length(Path)+1);
   StrPCopy(DriveStr[Drives],path);
   Result:=Drives;
   inc(Drives);
-  if Drives>High(DriveStr) then
-   Drives:=Low(DriveStr);
+  if Drives>26 then
+   Drives:=4;
 end;
+
+
+Function DiskFree(Drive: Byte): int64;
+var
+  fs : tstatfs;
+Begin
+  if ((Drive in [Low(FixDriveStr)..High(FixDriveStr)]) and (not (fixdrivestr[Drive]=nil)) and (fpstatfs(StrPas(fixdrivestr[drive]),@fs)<>-1)) or
+     ((Drive in [Low(DriveStr)..High(DriveStr)]) and (not (drivestr[Drive]=nil)) and (fpstatfs(StrPas(drivestr[drive]),@fs)<>-1)) then
+   Diskfree:=int64(fs.bavail)*int64(fs.bsize)
+  else
+   Diskfree:=-1;
+End;
+
+
+
+Function DiskSize(Drive: Byte): int64;
+var
+  fs : tstatfs;
+Begin
+  if ((Drive in [Low(FixDriveStr)..High(FixDriveStr)]) and (not (fixdrivestr[Drive]=nil)) and (fpstatfs(StrPas(fixdrivestr[drive]),@fs)<>-1)) or
+     ((Drive in [Low(DriveStr)..High(DriveStr)]) and (not (drivestr[Drive]=nil)) and (fpstatfs(StrPas(drivestr[drive]),@fs)<>-1)) then
+   DiskSize:=int64(fs.blocks)*int64(fs.bsize)
+  else
+   DiskSize:=-1;
+End;
 
 
 Procedure FreeDriveStr;
@@ -1186,17 +1223,6 @@ Function GetEpochTime: cint;
 }
 begin
   GetEpochTime:=fptime;
-end;
-
-Procedure DoGetUniversalDateTime(var year, month, day, hour, min,  sec, msec, usec : word);
-
-var
-  tz:timeval;
-begin
-  fpgettimeofday(@tz,nil);
-  EpochToUniversal(tz.tv_sec,year,month,day,hour,min,sec);
-  msec:=tz.tv_usec div 1000;
-  usec:=tz.tv_usec mod 1000;
 end;
 
 // Now, adjusted to local time.
@@ -1637,38 +1663,10 @@ begin
   Flush(Output);
 end;
 
-function GetUniversalTime(var SystemTime: TSystemTime): Boolean;
-var
-  usecs : Word;
-begin
-  DoGetUniversalDateTime(SystemTime.Year, SystemTime.Month, SystemTime.Day,SystemTime.Hour, SystemTime.Minute, SystemTime.Second, SystemTime.MilliSecond, usecs);
-  Result:=True;
-end;
-
 function GetLocalTimeOffset: Integer;
 
 begin
  Result := -Tzseconds div 60; 
-end;
-
-function GetLocalTimeOffset(const DateTime: TDateTime; const InputIsUTC: Boolean; out Offset: Integer): Boolean;
-
-var
-  Year, Month, Day, Hour, Minute, Second, MilliSecond: word;
-  UnixTime: Int64;
-  lTZInfo: TTZInfo;
-begin
-  DecodeDate(DateTime, Year, Month, Day);
-  DecodeTime(DateTime, Hour, Minute, Second, MilliSecond);
-  UnixTime:=UniversalToEpoch(Year, Month, Day, Hour, Minute, Second);
-
-  {$if declared(GetLocalTimezone)}
-  GetLocalTimeOffset:=GetLocalTimezone(UnixTime,InputIsUTC,lTZInfo);
-  if GetLocalTimeOffset then
-    Offset:=-lTZInfo.seconds div 60;
-  {$else}
-  GetLocalTimeOffset:=False;
-  {$endif}
 end;
 
 {$ifdef android}

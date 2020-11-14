@@ -41,6 +41,10 @@ var
   ucal_inDaylightTime: function (cal: UCalendar; var status: UErrorCode): UBool; cdecl;
   ucal_get: function (cal: UCalendar; field: UCalendarDateFields; var status: UErrorCode): int32_t; cdecl;
 
+var
+  TZStandardName: utf8string;
+  TZDaylightName: utf8string;
+
   GetIcuProc: function (const Name: AnsiString; var ProcPtr; libId: longint): boolean; external name 'ANDROID_GET_ICU_PROC';
 
 procedure ReadTimeZoneFromICU;
@@ -48,12 +52,8 @@ var
   locale: utf8string;
   tz: unicodestring;
   res: unicodestring;
-  TZStandardName: utf8string;
-  TZDaylightName: utf8string;
   err: UErrorCode;
   cal: UCalendar;
-  lTZInfo: TTZInfo;
-  lTZInfoEx: TTZInfoEx;
 begin
   if not Assigned(GetIcuProc) then exit;
   if not GetIcuProc('ucal_open', ucal_open, 1) then exit;
@@ -68,30 +68,21 @@ begin
   cal:=ucal_open(PUnicodeChar(tz), Length(tz), PAnsiChar(locale), 0, err);
   if cal = nil then
     exit;
-  lTzinfo.daylight:=ucal_inDaylightTime(cal, err);
+  tzdaylight:=ucal_inDaylightTime(cal, err);
 
   SetLength(res, 200);
   SetLength(res, ucal_getTimeZoneDisplayName(cal, UCAL_SHORT_STANDARD, PAnsiChar(locale), PUnicodeChar(res), Length(res), err));
   TZStandardName:=utf8string(res);
-  lTZInfoEx.name[False]:=TZStandardName;
+  tzname[False]:=PAnsiChar(TZStandardName);
 
   SetLength(res, 200);
   SetLength(res, ucal_getTimeZoneDisplayName(cal, UCAL_SHORT_DST, PAnsiChar(locale), PUnicodeChar(res), Length(res), err));
   TZDaylightName:=utf8string(res);
-  lTZInfoEx.name[True]:=TZDaylightName;
+  tzname[True]:=PAnsiChar(TZDaylightName);
 
-  lTZInfoEx.leap_correct:=0;
-  lTZInfoEx.leap_hit:=0;
-
-  lTZInfo.seconds:=ucal_get(cal, UCAL_ZONE_OFFSET, err) div 1000;
-  if lTZInfo.daylight then
-    lTZInfo.seconds:=Tzinfo.seconds + ucal_get(cal, UCAL_DST_OFFSET, err) div 1000;
-
-  // ToDo: correct validsince/validuntil values
-  lTZInfo.validsince:=low(lTZInfo.validsince);
-  lTZInfo.validuntil:=high(lTZInfo.validuntil);
-
-  SetTZInfo(lTZInfo, lTZInfoEx);
+  Tzseconds:=ucal_get(cal, UCAL_ZONE_OFFSET, err) div 1000;
+  if tzdaylight then
+    Tzseconds:=Tzseconds + ucal_get(cal, UCAL_DST_OFFSET, err) div 1000;
 
   ucal_close(cal);
 end;
@@ -122,25 +113,17 @@ function ReadTimeZoneFromLibC: boolean;
 var
   t: time_t;
   tt: Ptm;
-  lTZInfo: TTZInfo;
-  lTZInfoEx: TTZInfoEx;
 begin
   ReadTimeZoneFromLibC:=False;
-  lTZInfo:=default(TTZInfo);
-  lTZInfoEx:=default(TTZInfoEx);
+  tzname[false]:=c_tzname[0];
+  tzname[true]:=c_tzname[1];
   t:=fptime;
   tt:=localtime(@t);
   if tt <> nil then
     begin
-      lTZInfoEx.name[false]:=utf8string(c_tzname[0]);
-      lTZInfoEx.name[true]:=utf8string(c_tzname[1]);
-      lTZInfo.daylight:=tt^.tm_isdst <> 0;
-      lTZInfo.seconds:=tt^.tm_gmtoff;
-      // ToDo: correct validsince/validuntil values
-      lTZInfo.validsince:=low(lTZInfo.validsince);
-      lTZInfo.validuntil:=high(lTZInfo.validuntil);
-      SetTZInfo(lTZInfo, lTZInfoEx);
-      ReadTimeZoneFromLibC:=c_tzname[0] <> nil;
+      tzdaylight:=tt^.tm_isdst <> 0;
+      tzseconds:=tt^.tm_gmtoff;
+      ReadTimeZoneFromLibC:=tzname[false] <> nil;
     end;
 end;
 

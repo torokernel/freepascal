@@ -226,7 +226,6 @@ end;
 Function FileSeek (Handle, FOffset, Origin : Longint) : Longint;
 var
   Regs: registers;
-  res: dword;
 begin
   Regs.Eax := $4200;
   Regs.Al := Origin;
@@ -237,9 +236,8 @@ begin
   if Regs.Flags and CarryFlag <> 0 then
      result := -1
   else begin
-     LongRec(res).Lo := Regs.Ax;
-     LongRec(res).Hi := Regs.Dx;
-     result:=res;
+     LongRec(result).Lo := Regs.Ax;
+     LongRec(result).Hi := Regs.Dx;
      end ;
 end;
 
@@ -283,7 +281,7 @@ begin
 end;
 
 
-Function FileAge (Const FileName : RawByteString): Int64;
+Function FileAge (Const FileName : RawByteString): Longint;
 var Handle: longint;
 begin
   Handle := FileOpen(FileName, 0);
@@ -408,10 +406,9 @@ begin
 end;
 
 
-Function FileGetDate (Handle : Longint) : Int64;
+Function FileGetDate (Handle : Longint) : Longint;
 var
   Regs: registers;
-  res: dword;
 begin
   //!! for win95 an alternative function is available.
   Regs.Ebx := Handle;
@@ -421,21 +418,20 @@ begin
    result := -1
   else
    begin
-     LongRec(res).Lo := Regs.cx;
-     LongRec(res).Hi := Regs.dx;
-     result := res;
+     LongRec(result).Lo := Regs.cx;
+     LongRec(result).Hi := Regs.dx;
    end ;
 end;
 
 
-Function FileSetDate (Handle: longint; Age: Int64) : Longint;
+Function FileSetDate (Handle, Age : Longint) : Longint;
 var
   Regs: registers;
 begin
   Regs.Ebx := Handle;
   Regs.Eax := $5701;
-  Regs.Ecx := Lo(dword(Age));
-  Regs.Edx := Hi(dword(Age));
+  Regs.Ecx := Lo(Age);
+  Regs.Edx := Hi(Age);
   RealIntr($21, Regs);
   if Regs.Flags and CarryFlag <> 0 then
    result := -Regs.Ax

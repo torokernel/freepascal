@@ -71,6 +71,12 @@ begin
 end;
 
 
+procedure TThread.Terminate;
+
+begin
+end;
+
+
 function TThread.WaitFor: Integer;
 
 begin

@@ -168,8 +168,6 @@ Uses
            pthread_key_create(@TLSKey,nil);
            InitThreadVars(@CRelocateThreadvar);
 {$endif HASTHREADVAR}
-          { lazy initialize thread support }
-           LazyInitThreading;
            IsMultiThread:=true;
          end;
         { the only way to pass data to the newly created thread
@@ -265,15 +263,6 @@ Uses
       CGetCurrentThreadId:=dword(pthread_self());
     end;
 
-    procedure BeSetThreadDebugNameA(threadHandle: TThreadID; const ThreadName: AnsiString);
-    begin
-      {$Warning SetThreadDebugName needs to be implemented}
-    end;
-
-    procedure BeSetThreadDebugNameU(threadHandle: TThreadID; const ThreadName: UnicodeString);
-    begin
-      {$Warning SetThreadDebugName needs to be implemented}
-    end;
 
 {*****************************************************************************
                           Delphi/Win32 compatibility
@@ -505,8 +494,6 @@ begin
     ThreadSetPriority      :=@BeThreadSetPriority;
     ThreadGetPriority      :=@BeThreadGetPriority;
     GetCurrentThreadId     :=@BeGetCurrentThreadId;
-    SetThreadDebugNameA    :=@BeSetThreadDebugNameA;
-    SetThreadDebugNameU    :=@BeSetThreadDebugNameU;
     InitCriticalSection    :=@BeInitCriticalSection;
     DoneCriticalSection    :=@BeDoneCriticalSection;
     EnterCriticalSection   :=@BeEnterCriticalSection;

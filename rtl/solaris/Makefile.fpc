@@ -11,15 +11,14 @@ units=$(SYSTEMUNIT) uuchar unixtype ctypes strings objpas iso7185 extpas macpas 
       heaptrc lineinfo lnfodwrf \
       baseunix unixutil unixcp \
       termio unix initc cmem \
-      sysutils typinfo math sortbase fgl classes \
+      sysutils typinfo math fgl classes \
       charset cpall getopts \
       errors \
       dl dynlibs \
       types sysconst character \
       rtlconsts cthreads \
       dos fpwidestring \
-      cwstring fpintres $(CPU_UNITS) \
-      softfpu sfpux80 ufloatx80 sfpu128 ufloat128
+      cwstring fpintres $(CPU_UNITS)
 
 implicitunits=exeinfo \
       cp1250 cp1251 cp1252 cp1253 cp1254 cp1255 cp1256 cp1257 cp1258 \
@@ -157,7 +156,7 @@ unix$(PPUEXT) : unixtype$(PPUEXT) baseunix$(PPUEXT) unixutil$(PPUEXT) strings$(P
                  unxfunc.inc baseunix$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
 	$(COMPILER) $(UNIXINC)/unix.pp
 
-unixutil$(PPUEXT) : $(UNIXINC)/unixutil.pp baseunix$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
+unixutil$(PPUEXT) : $(SYSTEMUNIT)$(PPUEXT)
 	$(COMPILER) $(UNIXINC)/unixutil.pp
 
 unixcp$(PPUEXT) : $(UNIXINC)/unixcp.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT) baseunix$(PPUEXT)
@@ -185,10 +184,10 @@ sysutils$(PPUEXT) : $(UNIXINC)/sysutils.pp $(wildcard $(OBJPASDIR)/sysutils/*.in
 
 classes$(PPUEXT) : $(UNIXINC)/classes.pp $(wildcard $(OBJPASDIR)/classes/*.inc) \
                    sysutils$(PPUEXT) typinfo$(PPUEXT) rtlconsts$(PPUEXT) types$(PPUEXT) \
-		   $(SYSTEMUNIT)$(PPUEXT) fgl$(PPUEXT) sortbase$(PPUEXT)
+		   $(SYSTEMUNIT)$(PPUEXT) fgl$(PPUEXT)
         $(COMPILER) -Fi$(OBJPASDIR)/classes $(UNIXINC)/classes.pp
 
-fgl$(PPUEXT) : $(OBJPASDIR)/fgl.pp objpas$(PPUEXT) types$(PPUEXT) system$(PPUEXT) sysutils$(PPUEXT) sortbase$(PPUEXT)
+fgl$(PPUEXT) : $(OBJPASDIR)/fgl.pp objpas$(PPUEXT) types$(PPUEXT) system$(PPUEXT) sysutils$(PPUEXT)
         $(COMPILER) $(OBJPASDIR)/fgl.pp
 
 typinfo$(PPUEXT): $(OBJPASDIR)/typinfo.pp objpas$(PPUEXT) sysutils$(PPUEXT) rtlconsts$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
@@ -262,9 +261,6 @@ extpas$(PPUEXT) : $(INC)/extpas.pp dos$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
 fpintres$(PPUEXT) : $(INC)/fpintres.pp $(SYSTEMUNIT)$(PPUEXT)
         $(COMPILER) $(INC)/fpintres.pp
 
-sortbase$(PPUEXT) : $(INC)/sortbase.pp objpas$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<
-
 #
 # Other system-dependent RTL Units
 #
@@ -303,18 +299,3 @@ dl$(PPUEXT) : $(SYSTEMUNIT)$(PPUEXT)
 initc$(PPUEXT) : $(SYSTEMUNIT)$(PPUEXT)
 
 console$(PPUEXT) : baseunix$(PPUEXT) termio$(PPUEXT)
-
-softfpu$(PPUEXT) : $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-sfpux80$(PPUEXT) : $(INC)/sfpux80.pp $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-sfpu128$(PPUEXT) : $(INC)/sfpu128.pp $(INC)/softfpu.pp $(SYSTEMUNIT)$(PPUEXT) objpas$(PPUEXT)
-	$(COMPILER) $<
-
-ufloatx80$(PPUEXT) : $(INC)/ufloatx80.pp sfpux80$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<
-
-ufloat128$(PPUEXT) : $(INC)/ufloat128.pp sfpu128$(PPUEXT) $(SYSTEMUNIT)$(PPUEXT)
-	$(COMPILER) $<

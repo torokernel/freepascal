@@ -2,7 +2,7 @@
     This file is part of the Free Pascal run time library.
     Copyright (c) 2001 by Free Pascal development team
 
-    Low level file functions
+    Low leve file functions
 
     See the file COPYING.FPC, included in this distribution,
     for details about the copyright.
@@ -19,23 +19,14 @@
 *****************************************************************************}
 
 function do_isdevice(handle:thandle):boolean;
-{$IFNDEF WINCE}
-var
-  HT: dword;
-{$ENDIF WINCE}
 begin
-{$IFDEF WINCE}
-  Do_IsDevice := false;
-{$ELSE WINCE}
-  HT := GetFileType (Handle);
-  Do_IsDevice := (HT = FILE_TYPE_CHAR) or (HT = FILE_TYPE_PIPE);
-{$ENDIF WINCE}
+  do_isdevice:=(handle = StdInputHandle) or (handle = StdOutputHandle) or (handle = StdErrorHandle);
 end;
 
 
 procedure do_close(h : thandle);
 begin
-  if (h=StdInputHandle) or (h=StdOutputHandle) or (h=StdErrorHandle) then
+  if do_isdevice(h) then
    exit;
   if CloseHandle(h)=0 then
     Errno2InOutRes(GetLastError);

@@ -383,9 +383,7 @@
         var
            vmt  : PVmt;
            inittable : pointer;
-{$ifdef FPC_HAS_FEATURE_RTTI}
            mopinittable : PRTTIRecordOpOffsetTable;
-{$endif def FPC_HAS_FEATURE_RTTI}
            i : longint;
 {$endif VER3_0}
         begin
@@ -398,7 +396,6 @@
              InitInterfacePointers(self,instance);
 
 {$ifndef VER3_0}
-{$ifdef FPC_HAS_FEATURE_RTTI}
            { for management operators like initialize call int_initialize }
            vmt := PVmt(self);
            if assigned(vmt) then
@@ -418,7 +415,6 @@
                      end;
                  end;
              end;
-{$endif def FPC_HAS_FEATURE_RTTI}
 {$endif VER3_0}
 
            InitInstance:=TObject(Instance);
@@ -753,12 +749,10 @@
            while vmt<>nil do
              begin
                Temp:= vmt^.vInitTable;
-{$ifdef FPC_HAS_FEATURE_RTTI}
                { The RTTI format matches one for records, except the type is tkClass.
                  Since RecordRTTI does not check the type, calling it yields the desired result. }
                if Assigned(Temp) then
                  RecordRTTI(Self,Temp,@int_finalize);
-{$endif def FPC_HAS_FEATURE_RTTI}
                vmt:= vmt^.vParent;
              end;
         end;
@@ -983,21 +977,13 @@
         end;
 
       class function TObject.UnitName : {$ifdef FPC_HAS_FEATURE_ANSISTRINGS}ansistring{$else FPC_HAS_FEATURE_ANSISTRINGS}shortstring{$endif FPC_HAS_FEATURE_ANSISTRINGS};
-{$ifdef FPC_HAS_FEATURE_RTTI}
         type
+          // from the typinfo unit
           TClassTypeInfo = {$ifndef FPC_REQUIRES_PROPER_ALIGNMENT}packed{$endif}record
-            Attributes: Pointer;
-            case TTypeKind of
-              tkClass: (
-                ClassType: TClass;
-                ParentInfo: Pointer;
-                PropCount: SmallInt;
-                UnitName: ShortString;
-              );
-              { include for proper alignment }
-              tkInt64: (
-                Dummy: Int64;
-              );
+            ClassType: TClass;
+            ParentInfo: Pointer;
+            PropCount: SmallInt;
+            UnitName: ShortString;
           end;
           PClassTypeInfo = ^TClassTypeInfo;
         var
@@ -1016,11 +1002,6 @@
           else
             result:='';
         end;
-{$else not FPC_HAS_FEATURE_RTTI}
-        begin
-          result:='';
-        end;
-{$endif ndef FPC_HAS_FEATURE_RTTI}
 
       class function TObject.QualifiedClassName: {$ifdef FPC_HAS_FEATURE_ANSISTRINGS}ansistring{$else FPC_HAS_FEATURE_ANSISTRINGS}shortstring{$endif FPC_HAS_FEATURE_ANSISTRINGS};
         var
@@ -1079,13 +1060,13 @@
            end;
       end;
 
-   destructor TInterfacedObject.Destroy;
+   destructor TInterfacedObject.destroy;
 
    begin
      // We must explicitly reset. Bug ID 32353
      FRefCount:=0;
      FDestroyCount:=0;
-     inherited Destroy;
+     inherited destroy;
    end;
 
     procedure TInterfacedObject.AfterConstruction;
@@ -1161,39 +1142,6 @@
       else
         result:=longint(E_NOINTERFACE);
     end;
-
-{****************************************************************************
-                               TCustomAttribute
-****************************************************************************}
-
-
-    constructor TCustomAttribute.Create;
-    begin
-      inherited;
-    end;
-
-{****************************************************************************
-                               TCustomStoredAttribute
-****************************************************************************}
-
-
-    constructor StoredAttribute.Create;
-    begin
-    end;
-
-
-    constructor  StoredAttribute.Create(Const aFlag : Boolean);
-    begin
-      FFlag:=aFlag;
-    end;
-
-
-
-    constructor StoredAttribute.Create(Const aName : string);
-    begin
-      FName:=aName;
-    end;
-
 
 {****************************************************************************
                              Exception Support

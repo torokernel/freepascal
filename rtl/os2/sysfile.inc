@@ -343,9 +343,6 @@ function do_isdevice (Handle: THandle): boolean;
 var
   HT, Attr: cardinal;
   RC: cardinal;
-const
-  dhDevice = 1;
-  dhPipe = 2;
 begin
   do_isdevice:=false;
   RC := DosQueryHType(Handle, HT, Attr);
@@ -354,7 +351,7 @@ begin
     OSErrorWatch (RC);
     Exit;
    end;
-  if (HT = dhDevice) or (HT = dhPipe) then
+  if ht=1 then
    do_isdevice:=true;
 end;
 {$ASMMODE ATT}

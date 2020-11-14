@@ -61,9 +61,27 @@
 
 type
   PReal = ^Real;
-{ float64 definition is now in genmathh.inc,
-  to ensure that float64 will always be in
-  the system interface symbol table. }
+{ also necessary for Int() on systems with 64bit floats (JM) }
+{$ifndef FPC_SYSTEM_HAS_float64}
+{$ifdef ENDIAN_LITTLE}
+  float64 = record
+{$ifndef FPC_DOUBLE_HILO_SWAPPED}
+    low,high: longint;
+{$else}
+    high,low: longint;
+{$endif FPC_DOUBLE_HILO_SWAPPED}
+  end;
+{$else}
+  float64 = record
+{$ifndef FPC_DOUBLE_HILO_SWAPPED}
+    high,low: longint;
+{$else}
+    low,high: longint;
+{$endif FPC_DOUBLE_HILO_SWAPPED}
+  end;
+{$endif}
+{$endif FPC_SYSTEM_HAS_float64}
+
 
 const
       PIO4   =  7.85398163397448309616E-1;    {  pi/4        }
@@ -116,21 +134,20 @@ Begin
   pflags := @softfloat_exception_flags;
   pflags^:=pflags^ + i;
   unmasked_flags := pflags^ - softfloat_exception_mask;
-  { before we raise the exception, we mark it as handled,
-    this behaviour is similiar to the hardware handler in SignalToRunerror }
-  SysResetFPU;
   if (float_flag_invalid in unmasked_flags) then
      HandleError(207)
-  else if (float_flag_divbyzero in unmasked_flags) then
-     HandleError(208)
-  else if (float_flag_overflow in unmasked_flags) then
+  else
+  if (float_flag_divbyzero in unmasked_flags) then
+     HandleError(200)
+  else
+  if (float_flag_overflow in unmasked_flags) then
      HandleError(205)
-  else if (float_flag_underflow in unmasked_flags) then
+  else
+  if (float_flag_underflow in unmasked_flags) then
      HandleError(206)
-  else if (float_flag_inexact in unmasked_flags) then
-     HandleError(207)
-  else if (float_flag_denormal in unmasked_flags) then
-     HandleError(216);
+  else
+  if (float_flag_inexact in unmasked_flags) then
+     HandleError(207);
 end;
 
 
@@ -179,6 +196,10 @@ end;
 
 
 {$ifndef FPC_SYSTEM_HAS_TRUNC}
+{$ifndef FPC_SYSTEM_HAS_float32}
+type
+  float32 = longint;
+{$endif FPC_SYSTEM_HAS_float32}
 
 {$ifdef SUPPORT_DOUBLE}
    { based on softfloat float64_to_int64_round_to_zero }
@@ -1318,7 +1339,7 @@ end;
           if j0>=63 then     { Overflow, let trunc() raise an exception }
             exit(trunc(d))   { and/or return +/-MaxInt64 if it's masked }
           else
-            result:=((int64(hx) shl 32) or dword(float64low(d))) shl (j0-52);
+            result:=((int64(hx) shl 32) or float64low(d)) shl (j0-52);
         end
       else
         begin

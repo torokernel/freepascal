@@ -12,8 +12,7 @@ unit buildrtl;
       typinfo, fgl, classes,
       cpu, mmx, charset, character, getopts,
       fpwidestring,
-      winsysut, sharemem, fpintres, windirs,
-      softfpu, sfpux80, sfpu128, ufloatx80, ufloat128;
+      winsysut, sharemem, fpintres, windirs;
 
   implementation
 

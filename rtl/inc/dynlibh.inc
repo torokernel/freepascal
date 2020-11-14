@@ -61,7 +61,7 @@ Function GetLoadErrorStr: string;
 Function FreeLibrary(Lib : TLibHandle) : Boolean; inline;
 Function GetProcAddress(Lib : TlibHandle; const ProcName : AnsiString) : {$ifdef cpui8086}FarPointer{$else}Pointer{$endif}; inline;
 
-Procedure GetDynLibsManager (Out Manager : TDynLibsManager);
+Procedure GetDynLibsManager (Var Manager : TDynLibsManager);
 Procedure SetDynLibsManager (Const New : TDynLibsManager);
-Procedure SetDynLibsManager (Const New : TDynLibsManager; out Old: TDynLibsManager);
+Procedure SetDynLibsManager (Const New : TDynLibsManager; Var Old: TDynLibsManager);
 

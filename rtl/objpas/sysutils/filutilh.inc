@@ -46,7 +46,7 @@ Type
 
   // The actual unicode search record
   TUnicodeSearchRec = Record
-    Time : Int64 deprecated 'use TimeStamp instead';
+    Time : Longint;
     Size : Int64;
     Attr : Longint;
     Name : UnicodeString;
@@ -60,14 +60,12 @@ Type
 {$endif}
   private
     function GetTimeStamp: TDateTime;
-    function GetTimeStampUTC: TDateTime;
   public
     property TimeStamp: TDateTime read GetTimeStamp;
-    property TimeStampUTC: TDateTime read GetTimeStampUTC;
   end;
 
   TRawbyteSearchRec = Record
-    Time : Int64 deprecated 'use TimeStamp instead';
+    Time : Longint;
     Size : Int64;
     Attr : Longint;
     Name : RawByteString;
@@ -81,10 +79,8 @@ Type
 {$ENDIF}
   private
     function GetTimeStamp: TDateTime;
-    function GetTimeStampUTC: TDateTime;
   public
     property TimeStamp: TDateTime read GetTimeStamp;
-    property TimeStampUTC: TDateTime read GetTimeStampUTC;
   end;
 
 {$IFDEF FPC_UNICODE_RTL}
@@ -166,7 +162,7 @@ Const
   fsFromEnd       = 2;
 
   { File errors }
-  feInvalidHandle = THandle(-1);  //return value on FileOpen error
+  feInvalidHandle : THandle = THandle(-1);  //return value on FileOpen error
 
 Type
   TFileSearchOption = (sfoImplicitCurrentDir,sfoStripQuotes);
@@ -177,13 +173,11 @@ Function FileCreate (Const FileName : UnicodeString) : THandle;
 Function FileCreate (Const FileName : UnicodeString; Rights : Integer) : THandle;
 Function FileCreate (Const FileName : UnicodeString; ShareMode : Integer; Rights : Integer) : THandle;
 {$IFNDEF FPUNONE}
-Function FileAge (Const FileName : UnicodeString): Int64;
+Function FileAge (Const FileName : UnicodeString): Longint;
 {$ENDIF}
 Function FileExists (Const FileName : UnicodeString; FollowLink : Boolean = True) : Boolean;
 Function DirectoryExists (Const Directory : UnicodeString; FollowLink : Boolean = True) : Boolean;
-Function FileSetDate (Const FileName : UnicodeString;Age : Int64) : Longint;
-Function FileSetDate (Const FileName : UnicodeString;const FileDateTime : TDateTime) : Longint;
-Function FileSetDateUTC (Const FileName : UnicodeString;const FileDateTimeUTC : TDateTime) : Longint;
+Function FileSetDate (Const FileName : UnicodeString;Age : Longint) : Longint;
 Function FileGetAttr (Const FileName : UnicodeString) : Longint;
 Function FileSetAttr (Const Filename : UnicodeString; Attr: longint) : Longint;
 Function DeleteFile (Const FileName : UnicodeString) : Boolean;
@@ -196,7 +190,6 @@ Function FileSearch (Const Name, DirList : UnicodeString; ImplicitCurrentDir : B
 Function ExeSearch  (Const Name : UnicodeString; Const DirList : UnicodeString = '') : UnicodeString;
 Function FileIsReadOnly(const FileName : UnicodeString): Boolean;
 function FileAge(const FileName: UnicodeString; out FileDateTime: TDateTime; FollowLink: Boolean = True): Boolean;
-function FileAgeUTC(const FileName: UnicodeString; out FileDateTimeUTC: TDateTime; FollowLink: Boolean = True): Boolean;
 function FileGetSymLinkTarget(const FileName: UnicodeString; out SymLinkRec: TUnicodeSymLinkRec): Boolean;
 function FileGetSymLinkTarget(const FileName: UnicodeString; out TargetName: UnicodeString): Boolean; inline;
 
@@ -206,9 +199,7 @@ Function FileCreate (Const FileName : RawByteString; Rights : Integer) : THandle
 Function FileCreate (Const FileName : RawByteString; ShareMode : Integer; Rights : Integer) : THandle;
 Function FileExists (Const FileName : RawByteString; FollowLink : Boolean = True) : Boolean;
 Function DirectoryExists (Const Directory : RawByteString; FollowLink: Boolean = True) : Boolean;
-Function FileSetDate (Const FileName : RawByteString;Age : Int64) : Longint;
-Function FileSetDate (Const FileName : RawByteString;const FileDateTime : TDateTime) : Longint;
-Function FileSetDateUTC (Const FileName : RawByteString;const FileDateTimeUTC : TDateTime) : Longint;
+Function FileSetDate (Const FileName : RawByteString;Age : Longint) : Longint;
 Function FileGetAttr (Const FileName : RawByteString) : Longint;
 Function FileSetAttr (Const Filename : RawByteString; Attr: longint) : Longint;
 Function DeleteFile (Const FileName : RawByteString) : Boolean;
@@ -219,9 +210,8 @@ Function FileSearch (Const Name, DirList : RawByteString; ImplicitCurrentDir : B
 Function ExeSearch  (Const Name : RawByteString; Const DirList : RawByteString = '') : RawByteString;
 Function FileIsReadOnly(const FileName: RawByteString): Boolean;
 function FileAge(const FileName: RawByteString; out FileDateTime: TDateTime; FollowLink: Boolean = True): Boolean;
-function FileAgeUTC(const FileName: RawByteString; out FileDateTimeUTC: TDateTime; FollowLink: Boolean = True): Boolean;
 {$ifndef FPUNONE}
-Function FileAge (Const FileName : RawByteString): Int64;
+Function FileAge (Const FileName : RawByteString): Longint;
 {$endif}
 function FileGetSymLinkTarget(const FileName: RawByteString; out SymLinkRec: TRawbyteSymLinkRec): Boolean;
 function FileGetSymLinkTarget(const FileName: RawByteString; out TargetName: RawByteString): Boolean; inline;
@@ -235,20 +225,7 @@ Procedure FileClose (Handle : THandle);
 Function FileTruncate (Handle : THandle;Size: Int64) : boolean;
 Function FindNext (Var Rslt : TRawByteSearchRec) : Longint;
 Procedure FindClose (Var F : TRawByteSearchrec);
-Function FileGetDate (Handle : THandle) : Int64;
-Function FileGetDate (Handle : THandle; out FileDateTime: TDateTime) : Boolean;
-Function FileGetDateUTC (Handle : THandle; out FileDateTimeUTC: TDateTime) : Boolean;
-Function FileSetDate (Handle : THandle;Age : Int64) : Longint;
-Function FileSetDate (Handle : THandle; const FileDateTime: TDateTime) : Longint;
-Function FileSetDateUTC (Handle : THandle; const FileDateTimeUTC: TDateTime) : Longint;
+Function FileGetDate (Handle : THandle) : Longint;
+Function FileSetDate (Handle : THandle;Age : Longint) : Longint;
 Function GetFileHandle(var f : File):THandle;
 Function GetFileHandle(var f : Text):THandle;
-
-Function GetFileContents(Const aFileName : RawByteString) : TBytes;
-Function GetFileContents(Const aFileName : UnicodeString) : TBytes;
-Function GetFileContents(Const aHandle : THandle) : TBytes;
-Function GetFileAsString(Const aFileName : RawByteString) : RawByteString;
-Function GetFileAsString(Const aFileName : RawByteString; aEncoding : TEncoding) : RawByteString;
-Function GetFileAsString(Const aFileName : UnicodeString) : UnicodeString;
-Function GetFileAsString(Const aFileName : UnicodeString; aEncoding : TEncoding) : UnicodeString;
-

@@ -17,52 +17,52 @@
 { Variant types. Changes to these consts must be synchronized with
   similar list in compiler code, in implementation part of symdef.pas }
 const
-   varEmpty = 0;
-   varNull = 1;
-   varSmallInt = 2;
-   varInteger = 3;
+   varempty = 0;
+   varnull = 1;
+   varsmallint = 2;
+   varinteger = 3;
 {$ifndef FPUNONE}
-   varSingle = 4;
-   varDouble = 5;
-   varDate = 7;
+   varsingle = 4;
+   vardouble = 5;
+   vardate = 7;
 {$endif}
-   varCurrency = 6;
-   varOleStr = 8;
-   varDispatch = 9;
-   varError = 10;
-   varBoolean = 11;
-   varVariant = 12;
-   varUnknown = 13;
-   varDecimal = 14;
-   varShortInt = 16;
-   varByte = 17;
-   varWord = 18;
-   varLongWord = 19;
-   varInt64 = 20;
-   varQWord = 21;
+   varcurrency = 6;
+   varolestr = 8;
+   vardispatch = 9;
+   varerror = 10;
+   varboolean = 11;
+   varvariant = 12;
+   varunknown = 13;
+   vardecimal = 14;
+   varshortint = 16;
+   varbyte = 17;
+   varword = 18;
+   varlongword = 19;
+   varint64 = 20;
+   varqword = 21;
 
-   varRecord = 36;
+   varrecord = 36;
 
    { The following values never appear as TVarData.VType, but are used in
      TCallDesc.Args[] as aliases for compiler-specific types.
      (since it provides only 1 byte per element, actual values won't fit)
      The choice of values is pretty much arbitrary. }
 
-   varStrArg = $48;         { maps to varstring }
-   varUStrArg = $49;        { maps to varustring }
+   varstrarg = $48;         { maps to varstring }
+   varustrarg = $49;        { maps to varustring }
 
    { Compiler-specific variant types (not known to COM) are kept in
     'pseudo-custom' range of $100-$10E. Real custom types start with $10F. }
 
-   varString = $100;
-   varAny = $101;
-   varUString = $102;
-   varTypeMask = $fff;
-   varArray = $2000;
-   varByRef = $4000;
+   varstring = $100;
+   varany = $101;
+   varustring = $102;
+   vartypemask = $fff;
+   vararray = $2000;
+   varbyref = $4000;
 
-   varWord64 = varQWord;
-   varUInt64 = varQWord; // Delphi alias
+   varword64 = varqword;
+   varuint64 = varqword; // Delphi alias
 
 type
    tvartype = word;
@@ -113,7 +113,6 @@ type
                      varerror : (verror : hresult);
                      varboolean : (vboolean : wordbool);
                      varunknown : (vunknown : pointer);
-                     varustring : (vustring : pointer);
                      // vardecimal : ( : );
                      varshortint : (vshortint : shortint);
                      varbyte : (vbyte : byte);
@@ -215,7 +214,7 @@ type
    end;
    pvariantmanager = ^tvariantmanager;
 
-procedure GetVariantManager(Out VarMgr: TVariantManager);
+procedure GetVariantManager(var VarMgr: TVariantManager);
 procedure SetVariantManager(const VarMgr: TVariantManager);
 
 { Global constants. Needed here only for compatibility. }
@@ -243,8 +242,6 @@ operator :=(const source : dword) dest : variant;{$ifdef SYSTEMINLINE}inline;{$e
 operator :=(const source : longint) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
 operator :=(const source : qword) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
 operator :=(const source : int64) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
-operator :=(const source : NativeInt) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
-operator :=(const source : NativeUInt) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
 
 { Boolean }
 operator :=(const source : boolean) dest : variant;{$ifdef SYSTEMINLINE}inline;{$endif}
@@ -302,8 +299,6 @@ operator :=(const source : variant) dest : dword;{$ifdef SYSTEMINLINE}inline;{$e
 operator :=(const source : variant) dest : longint;{$ifdef SYSTEMINLINE}inline;{$endif}
 operator :=(const source : variant) dest : qword;{$ifdef SYSTEMINLINE}inline;{$endif}
 operator :=(const source : variant) dest : int64;{$ifdef SYSTEMINLINE}inline;{$endif}
-operator :=(const source : variant) dest : NativeInt;{$ifdef SYSTEMINLINE}inline;{$endif}
-operator :=(const source : variant) dest : NativeUInt;{$ifdef SYSTEMINLINE}inline;{$endif}
 
 { Boolean }
 operator :=(const source : variant) dest : boolean;{$ifdef SYSTEMINLINE}inline;{$endif}

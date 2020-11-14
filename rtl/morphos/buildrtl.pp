@@ -6,14 +6,11 @@ unit buildrtl;
       si_prc,
       athreads, dos, sysutils,
 
-      exeinfo, lineinfo,
-
       ctypes, strings,
       rtlconsts, sysconst, math, types,
-      typinfo, sortbase, fgl, classes,
+      typinfo, fgl, classes,
       charset, character, getopts,
-      fpwidestring, fpintres,
-      softfpu, sfpux80, ufloatx80, sfpu128, ufloat128;
+      fpintres;
 
   implementation
 

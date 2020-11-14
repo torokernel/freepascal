@@ -15,8 +15,6 @@
 
  **********************************************************************}
 
-{ $define SYSTEM_DEBUG}
-
 procedure SignalToRunerror(Sig: longint; SigInfo: PSigInfo; UContext: PUContext); public name '_FPC_DEFAULTSIGHANDLER'; cdecl;
 
 var
@@ -25,19 +23,7 @@ begin
   res:=0;
   case sig of
     SIGFPE:
-      begin
         res:=207;
-{$ifdef SYSTEM_DEBUG}
-        writeln('magic of FPSIMD_Context: $',hexstr(uContext^.uc_mcontext.FPSIMD_Context.head.magic,8));
-        writeln('size of FPSIMD_Context: $',hexstr(uContext^.uc_mcontext.FPSIMD_Context.head.size,8));
-{$endif SYSTEM_DEBUG}
-        if (uContext^.uc_mcontext.FPSIMD_Context.head.magic=$46508001) and
-           (uContext^.uc_mcontext.FPSIMD_Context.head.size=$210) then
-           begin
-             with uContext^.uc_mcontext.FPSIMD_Context do
-               fpsr:=fpsr and not(fpu_exception_mask shr fpu_exception_mask_to_status_mask_shift);
-           end;
-      end;
     SIGILL:
         res:=216;
     SIGSEGV :
@@ -52,10 +38,7 @@ begin
   reenable_signal(sig);
   { give runtime error at the position where the signal was raised }
   if res<>0 then
-    begin
-      uContext^.uc_mcontext.regs[0]:=res;
-      uContext^.uc_mcontext.regs[1]:=uContext^.uc_mcontext.pc;
-      uContext^.uc_mcontext.regs[2]:=uContext^.uc_mcontext.regs[29];
-      pointer(uContext^.uc_mcontext.pc):=@HandleErrorAddrFrame;
-    end;
+    HandleErrorAddrFrame(res,
+      pointer(uContext^.uc_mcontext.pc),
+      pointer(uContext^.uc_mcontext.regs[29]));
 end;

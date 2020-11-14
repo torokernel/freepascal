@@ -48,8 +48,7 @@ Const
    SInvalidArgIndex = 'Invalid argument index in format "%s"';
    SInvalidBoolean = '"%s" is not a valid boolean.';
    SInvalidCast = 'Invalid type cast';
-   SInvalidDateTime = '"%s" is not a valid date/time value.';
-   SInvalidDateTimeFloat = '%f is not a valid date/time value.';
+   SInvalidDateTime = '%f is not a valid date/time value.';
    SInvalidDrive = 'Invalid drive specified';
    SInvalidFileHandle = 'Invalid file handle';
    SInvalidFloat = '"%s" is an invalid float';

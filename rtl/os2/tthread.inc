@@ -210,6 +210,12 @@ begin
 end;
 
 
+procedure TThread.Terminate;
+begin
+ FTerminated := true;
+end;
+
+
 function TThread.WaitFor: Integer;
 var
  FH: cardinal;

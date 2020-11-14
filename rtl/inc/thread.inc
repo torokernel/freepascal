@@ -96,13 +96,6 @@ Var
           CurrentTM.ReleaseThreadVars;
       end;
 
-
-    procedure InitThread;
-      begin
-        { we should find a reasonable value here }
-        InitThread($1000000);
-      end;
-
 {*****************************************************************************
                             Overloaded functions
 *****************************************************************************}
@@ -212,19 +205,7 @@ begin
   Result:=CurrentTM.GetCurrentThreadID();
 end;
 
-procedure SetThreadDebugName(threadHandle: TThreadID; const ThreadName: AnsiString);
-begin
-  CurrentTM.SetThreadDebugNameA(threadHandle, ThreadName);
-end;
-
-{$ifdef FPC_HAS_FEATURE_UNICODESTRINGS}
-procedure SetThreadDebugName(threadHandle: TThreadID; const ThreadName: UnicodeString);
-begin
-  CurrentTM.SetThreadDebugNameU(threadHandle, ThreadName);
-end;
-{$endif FPC_HAS_FEATURE_UNICODESTRINGS}
-
-procedure InitCriticalSection(out cs : TRTLCriticalSection);
+procedure InitCriticalSection(var cs : TRTLCriticalSection);
 
 begin
   CurrentTM.InitCriticalSection(cs);
@@ -254,14 +235,14 @@ begin
   CurrentTM.LeaveCriticalSection(cs);
 end;
 
-Function GetThreadManager(Out TM : TThreadManager) : Boolean;
+Function GetThreadManager(Var TM : TThreadManager) : Boolean;
 
 begin
   TM:=CurrentTM;
   Result:=True;
 end;
 
-Function SetThreadManager(Const NewTM : TThreadManager; Out OldTM : TThreadManager) : Boolean;
+Function SetThreadManager(Const NewTM : TThreadManager; Var OldTM : TThreadManager) : Boolean;
 
 begin
   GetThreadManager(OldTM);
@@ -350,63 +331,6 @@ begin
 end;
 
 { ---------------------------------------------------------------------
-    lazy thread initialization support
-  ---------------------------------------------------------------------}
-
-type
-  PLazyInitThreadingProcInfo = ^TLazyInitThreadingProcInfo;
-  TLazyInitThreadingProcInfo = Record
-    Next     : PLazyInitThreadingProcInfo;
-    Proc     : TProcedure;
-  End;
-const
-  LazyInitThreadingProcList: PLazyInitThreadingProcInfo = nil;
-
-procedure FinalizeLazyInitThreading;
-var
-  p: PLazyInitThreadingProcInfo;
-begin
-  while assigned(LazyInitThreadingProcList) do
-    begin
-    p:=LazyInitThreadingProcList^.Next;
-    Dispose(LazyInitThreadingProcList);
-    LazyInitThreadingProcList:=p;
-    end;
-end;
-
-procedure RegisterLazyInitThreadingProc(const proc: TProcedure);
-var
-  p: PLazyInitThreadingProcInfo;
-begin
-  if IsMultiThread then
-    begin
-    { multithreading is already enabled - execute directly }
-    proc();
-    end
-  else
-    begin
-    if not assigned(LazyInitThreadingProcList) then
-      AddExitProc(@FinalizeLazyInitThreading);
-    new(p);
-    p^.Next:=LazyInitThreadingProcList;
-    p^.Proc:=proc;
-    LazyInitThreadingProcList:=p;
-    end;
-end;
-
-procedure LazyInitThreading;
-var
-  p: PLazyInitThreadingProcInfo;
-begin
-  p:=LazyInitThreadingProcList;
-  while assigned(p) do
-    begin
-    p^.Proc();
-    p:=p^.Next;
-    end;
-end;
-
-{ ---------------------------------------------------------------------
     ThreadManager which gives run-time error. Use if no thread support.
   ---------------------------------------------------------------------}
 
@@ -478,18 +402,6 @@ begin
     ThreadingAlreadyUsed:=true;
   result:=TThreadID(1);
 end;
-
-procedure NoSetThreadDebugNameA(threadHandle: TThreadID; const ThreadName: AnsiString);
-begin
-  NoThreadError;
-end;
-
-{$ifdef FPC_HAS_FEATURE_UNICODESTRINGS}
-procedure NoSetThreadDebugNameU(threadHandle: TThreadID; const ThreadName: UnicodeString);
-begin
-  NoThreadError;
-end;
-{$endif FPC_HAS_FEATURE_UNICODESTRINGS}
 
 procedure NoCriticalSection(var CS);
 
@@ -599,10 +511,6 @@ const
          ThreadSetPriority      : TThreadSetPriorityHandler(@NoThreadError);
          ThreadGetPriority      : TThreadGetPriorityHandler(@NoThreadError);
          GetCurrentThreadId     : @NoGetCurrentThreadId;
-         SetThreadDebugNameA    : TThreadSetThreadDebugNameHandlerA(@NoThreadError);
-         {$ifdef FPC_HAS_FEATURE_UNICODESTRINGS}
-         SetThreadDebugNameU    : TThreadSetThreadDebugNameHandlerU(@NoThreadError);
-         {$endif FPC_HAS_FEATURE_UNICODESTRINGS}
          InitCriticalSection    : TCriticalSectionHandler(@NoThreadError);
          DoneCriticalSection    : TCriticalSectionHandler(@NoThreadError);
          EnterCriticalSection   : TCriticalSectionHandler(@NoThreadError);
@@ -635,10 +543,6 @@ const
          ThreadSetPriority      : @NoThreadSetPriority;
          ThreadGetPriority      : @NoThreadGetPriority;
          GetCurrentThreadId     : @NoGetCurrentThreadId;
-         SetThreadDebugNameA    : @NoSetThreadDebugNameA;
-         {$ifdef FPC_HAS_FEATURE_UNICODESTRINGS}
-         SetThreadDebugNameU    : @NoSetThreadDebugNameU;
-         {$endif FPC_HAS_FEATURE_UNICODESTRINGS}
          InitCriticalSection    : @NoCriticalSection;
          DoneCriticalSection    : @NoCriticalSection;
          EnterCriticalSection   : @NoCriticalSection;

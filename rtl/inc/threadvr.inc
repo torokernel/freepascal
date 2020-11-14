@@ -19,18 +19,18 @@
                            Threadvar support
 *****************************************************************************}
 
-{$ifndef FPC_SECTION_THREADVARS}
+
 type
   pltvInitEntry = ^ltvInitEntry;
   ppltvInitEntry = ^pltvInitEntry;
-  ltvInitEntry = {$ifndef FPC_ALIGNED_THREADVARTABLES}packed{$endif} record
+  ltvInitEntry = packed record
      varaddr : {$ifdef cpu16}pword{$else}pdword{$endif};
      size    : longint;
   end;
 
-  TltvInitTablesTable = {$ifndef FPC_ALIGNED_THREADVARTABLES}packed{$endif} record
+  TltvInitTablesTable = packed record
     count  : dword;
-    tables : {$ifndef FPC_ALIGNED_THREADVARTABLES}packed{$endif} array [1..{$ifdef cpu16}16{$else}32767{$endif}] of {$ifdef ver3_0}pltvInitEntry{$else}ppltvInitEntry{$endif};
+    tables : packed array [1..{$ifdef cpu16}16{$else}32767{$endif}] of {$ifdef ver3_0}pltvInitEntry{$else}ppltvInitEntry{$endif};
   end;
   PltvInitTablesTable = ^TltvInitTablesTable;
 
@@ -100,12 +100,10 @@ begin
       copy_unit_threadvars (tables[i]{$ifndef ver3_0}^{$endif});
   end;
 end;
-{$endif FPC_SECTION_THREADVARS}
 
 procedure InitThreadVars(RelocProc : TRelocateThreadVarHandler);
 
 begin
-{$ifndef FPC_SECTION_THREADVARS}
    { initialize threadvars }
    init_all_unit_threadvars;
    { allocate mem for main thread threadvars }
@@ -114,8 +112,6 @@ begin
    copy_all_unit_threadvars;
    { install threadvar handler }
    fpc_threadvar_relocate_proc:=RelocProc;
-{$endif FPC_SECTION_THREADVARS}
-
 {$ifdef FPC_HAS_FEATURE_HEAP}
 {$ifndef HAS_MEMORYMANAGER}
 {$ifndef FPC_NO_DEFAULT_HEAP}

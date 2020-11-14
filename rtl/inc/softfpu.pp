@@ -84,6 +84,8 @@ unit softfpu;
 }
 {$Q-}
 {$goto on}
+{$macro on}
+{$define compilerproc:=stdcall }
 
 interface
 {$endif not(defined(fpc_softfpu_interface)) and not(defined(fpc_softfpu_implementation))}
@@ -95,10 +97,8 @@ Software IEC/IEEE floating-point types.
 -------------------------------------------------------------------------------
 }
 TYPE
-{$ifndef FPC_SYSTEM_HAS_float32}
   float32 = longword;
 {$define FPC_SYSTEM_HAS_float32}
-{$endif ndef FPC_SYSTEM_HAS_float32}
   { we use here a record in the function header because
     the record allows bitwise conversion to single }
   float32rec = record
@@ -123,61 +123,57 @@ TYPE
   sbits64 = int64;
 
 {$ifdef ENDIAN_LITTLE}
-{$ifndef FPC_SYSTEM_HAS_float64}
   float64 = record
     case byte of
+      1: (low,high : bits32);
       // force the record to be aligned like a double
       // else *_to_double will fail for cpus like sparc
       // and avoid expensive unpacking/packing operations
-      1: (dummy : double);
-      2: (low,high : bits32);
+      2: (dummy : double);
   end;
-{$endif ndef FPC_SYSTEM_HAS_float64}
 
   floatx80 = record
     case byte of
+      1: (low : qword;high : word);
       // force the record to be aligned like a double
       // else *_to_double will fail for cpus like sparc
       // and avoid expensive unpacking/packing operations
-      1: (dummy : extended);
-      2: (low : qword;high : word);
+      2: (dummy : extended);
   end;
 
   float128 = record
     case byte of
+      1: (low,high : qword);
       // force the record to be aligned like a double
       // else *_to_double will fail for cpus like sparc
       // and avoid expensive unpacking/packing operations
-      1: (dummy : qword);
-      2: (low,high : qword);
+      2: (dummy : qword);
   end;
 {$else}
-{$ifndef FPC_SYSTEM_HAS_float64}
   float64 = record
       case byte of
+        1: (high,low : bits32);
         // force the record to be aligned like a double
         // else *_to_double will fail for cpus like sparc
-        1: (dummy : double);
-        2: (high,low : bits32);
+        2: (dummy : double);
   end;
-{$endif ndef FPC_SYSTEM_HAS_float64}
 
   floatx80 = record
     case byte of
+      1: (high : word;low : qword);
       // force the record to be aligned like a double
       // else *_to_double will fail for cpus like sparc
       // and avoid expensive unpacking/packing operations
-      1: (dummy : qword);
-      2: (high : word;low : qword);
+      2: (dummy : qword);
   end;
 
   float128 = record
     case byte of
+      1: (high : qword;low : qword);
       // force the record to be aligned like a double
       // else *_to_double will fail for cpus like sparc
       // and avoid expensive unpacking/packing operations
-      1: (dummy : qword);
-      2: (high : qword;low : qword);
+      2: (dummy : qword);
   end;
 {$endif}
 
@@ -191,7 +187,7 @@ the corresponding value `b', and 0 otherwise.  The comparison is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_lt(a: float64;b: float64): flag; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_lt(a: float64;b: float64): flag; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns 1 if the double-precision floating-point value `a' is less than
@@ -200,7 +196,7 @@ is performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_le(a: float64;b: float64): flag; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_le(a: float64;b: float64): flag; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns 1 if the double-precision floating-point value `a' is equal to
@@ -208,7 +204,7 @@ the corresponding value `b', and 0 otherwise.  The comparison is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_eq(a: float64;b: float64): flag; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_eq(a: float64;b: float64): flag; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the square root of the double-precision floating-point value `a'.
@@ -216,7 +212,7 @@ The operation is performed according to the IEC/IEEE Standard for Binary
 Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-function float64_sqrt( a: float64 ): float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+function float64_sqrt( a: float64 ): float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the remainder of the double-precision floating-point value `a'
@@ -224,7 +220,7 @@ with respect to the corresponding value `b'.  The operation is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_rem(a: float64; b : float64) : float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_rem(a: float64; b : float64) : float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of dividing the double-precision floating-point value `a'
@@ -232,7 +228,7 @@ by the corresponding value `b'.  The operation is performed according to the
 IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_div(a: float64; b : float64) : float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_div(a: float64; b : float64) : float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of multiplying the double-precision floating-point values
@@ -240,7 +236,7 @@ Returns the result of multiplying the double-precision floating-point values
 for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_mul( a: float64; b:float64) : float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_mul( a: float64; b:float64) : float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of subtracting the double-precision floating-point values
@@ -248,7 +244,7 @@ Returns the result of subtracting the double-precision floating-point values
 for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_sub(a: float64; b : float64) : float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_sub(a: float64; b : float64) : float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of adding the double-precision floating-point values `a'
@@ -256,7 +252,7 @@ and `b'.  The operation is performed according to the IEC/IEEE Standard for
 Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_add( a: float64; b : float64) : float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_add( a: float64; b : float64) : float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Rounds the double-precision floating-point value `a' to an integer,
@@ -265,7 +261,7 @@ operation is performed according to the IEC/IEEE Standard for Binary
 Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_round_to_int(a: float64) : float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_round_to_int(a: float64) : float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of converting the double-precision floating-point value
@@ -274,7 +270,7 @@ performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_to_float32(a: float64) : float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_to_float32(a: float64) : float32rec; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of converting the double-precision floating-point value
@@ -286,7 +282,7 @@ the conversion overflows, the largest integer with the same sign as `a' is
 returned.
 -------------------------------------------------------------------------------
 *}
-Function float64_to_int32_round_to_zero(a: float64 ): int32; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_to_int32_round_to_zero(a: float64 ): int32; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of converting the double-precision floating-point value
@@ -298,7 +294,7 @@ positive integer is returned.  Otherwise, if the conversion overflows, the
 largest integer with the same sign as `a' is returned.
 -------------------------------------------------------------------------------
 *}
-Function float64_to_int32(a: float64): int32; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_to_int32(a: float64): int32; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns 1 if the single-precision floating-point value `a' is less than
@@ -306,7 +302,7 @@ the corresponding value `b', and 0 otherwise.  The comparison is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_lt( a:float32rec ; b : float32rec): flag; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_lt( a:float32rec ; b : float32rec): flag; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns 1 if the single-precision floating-point value `a' is less than
@@ -315,7 +311,7 @@ is performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_le( a: float32rec; b : float32rec ):flag; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_le( a: float32rec; b : float32rec ):flag; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns 1 if the single-precision floating-point value `a' is equal to
@@ -323,7 +319,7 @@ the corresponding value `b', and 0 otherwise.  The comparison is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_eq( a:float32rec; b:float32rec): flag; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_eq( a:float32rec; b:float32rec): flag; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the square root of the single-precision floating-point value `a'.
@@ -331,7 +327,7 @@ The operation is performed according to the IEC/IEEE Standard for Binary
 Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_sqrt(a: float32rec ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_sqrt(a: float32rec ): float32rec; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the remainder of the single-precision floating-point value `a'
@@ -339,7 +335,7 @@ with respect to the corresponding value `b'.  The operation is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_rem(a: float32rec; b: float32rec ):float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_rem(a: float32rec; b: float32rec ):float32rec; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of dividing the single-precision floating-point value `a'
@@ -347,7 +343,7 @@ by the corresponding value `b'.  The operation is performed according to the
 IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_div(a: float32rec;b: float32rec ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_div(a: float32rec;b: float32rec ): float32rec; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of multiplying the single-precision floating-point values
@@ -355,7 +351,7 @@ Returns the result of multiplying the single-precision floating-point values
 for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_mul(a: float32rec; b: float32rec ) : float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_mul(a: float32rec; b: float32rec ) : float32rec; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of subtracting the single-precision floating-point values
@@ -363,7 +359,7 @@ Returns the result of subtracting the single-precision floating-point values
 for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_sub( a: float32rec ; b:float32rec ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_sub( a: float32rec ; b:float32rec ): float32rec; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of adding the single-precision floating-point values `a'
@@ -371,7 +367,7 @@ and `b'.  The operation is performed according to the IEC/IEEE Standard for
 Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_add( a: float32rec; b:float32rec ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_add( a: float32rec; b:float32rec ): float32rec; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Rounds the single-precision floating-point value `a' to an integer,
@@ -380,7 +376,7 @@ operation is performed according to the IEC/IEEE Standard for Binary
 Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_round_to_int( a: float32rec): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_round_to_int( a: float32rec): float32rec; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of converting the single-precision floating-point value
@@ -389,7 +385,7 @@ performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_to_float64( a : float32rec) : Float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_to_float64( a : float32rec) : Float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of converting the single-precision floating-point value
@@ -401,7 +397,7 @@ the conversion overflows, the largest integer with the same sign as `a' is
 returned.
 -------------------------------------------------------------------------------
 *}
-Function float32_to_int32_round_to_zero( a: Float32rec ): int32; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_to_int32_round_to_zero( a: Float32rec ): int32; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of converting the single-precision floating-point value
@@ -413,7 +409,7 @@ positive integer is returned.  Otherwise, if the conversion overflows, the
 largest integer with the same sign as `a' is returned.
 -------------------------------------------------------------------------------
 *}
-Function float32_to_int32( a : float32rec) : int32; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_to_int32( a : float32rec) : int32; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of converting the 32-bit two's complement integer `a' to
@@ -421,7 +417,7 @@ the double-precision floating-point format.  The conversion is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function int32_to_float64( a: int32) : float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function int32_to_float64( a: int32) : float64; compilerproc;
 {*
 -------------------------------------------------------------------------------
 Returns the result of converting the 32-bit two's complement integer `a' to
@@ -429,23 +425,23 @@ the single-precision floating-point format.  The conversion is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function int32_to_float32( a: int32): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function int32_to_float32( a: int32): float32rec; compilerproc;
 
 {*----------------------------------------------------------------------------
 | Returns the result of converting the 64-bit two's complement integer `a'
 | to the double-precision floating-point format.  The conversion is performed
 | according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 *----------------------------------------------------------------------------*}
-Function int64_to_float64( a: int64 ): float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
-Function qword_to_float64( a: qword ): float64; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function int64_to_float64( a: int64 ): float64; compilerproc;
+Function qword_to_float64( a: qword ): float64; compilerproc;
 
 {*----------------------------------------------------------------------------
 | Returns the result of converting the 64-bit two's complement integer `a'
 | to the single-precision floating-point format.  The conversion is performed
 | according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 *----------------------------------------------------------------------------*}
-Function int64_to_float32( a: int64 ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
-Function qword_to_float32( a: qword ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function int64_to_float32( a: int64 ): float32rec; compilerproc;
+Function qword_to_float32( a: qword ): float32rec; compilerproc;
 
 // +++
 function float32_to_int64( a: float32 ): int64;
@@ -560,17 +556,6 @@ implementation
 
 
 {$if not(defined(fpc_softfpu_interface))}
-
-{$ifdef FPC}
-  { disable range and overflow checking explicitly }
-  { This might be more essential for x80 and 128-bit
-    floating point types and could, maybe be
-    restricted to code handle floatx80 and float128 }
-  {$push}
-  {$R-}
-  {$Q-}
-{$endif FPC}
-
 (*****************************************************************************)
 (*----------------------------------------------------------------------------*)
 (* Primitive arithmetic functions, including multi-word arithmetic, and       *)
@@ -3013,7 +2998,7 @@ the single-precision floating-point format.  The conversion is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function int32_to_float32( a: int32): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function int32_to_float32( a: int32): float32rec; compilerproc;
  Var
   zSign : Flag;
  Begin
@@ -3043,7 +3028,7 @@ the double-precision floating-point format.  The conversion is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function int32_to_float64( a: int32) : float64;{$ifdef FPC_IS_SYSTEM} [public,Alias:'INT32_TO_FLOAT64'];compilerproc;{$endif}
+Function int32_to_float64( a: int32) : float64;{$ifdef fpc} [public,Alias:'INT32_TO_FLOAT64'];compilerproc;{$endif}
   var
     zSign : flag;
     absA : bits32;
@@ -3152,7 +3137,7 @@ positive integer is returned.  Otherwise, if the conversion overflows, the
 largest integer with the same sign as `a' is returned.
 -------------------------------------------------------------------------------
 *}
-Function float32_to_int32( a : float32rec) : int32;{$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_to_int32( a : float32rec) : int32;compilerproc;
   Var
     aSign: flag;
     aExp, shiftCount: int16;
@@ -3239,7 +3224,7 @@ the conversion overflows, the largest integer with the same sign as `a' is
 returned.
 -------------------------------------------------------------------------------
 *}
-Function float32_to_int32_round_to_zero( a: Float32rec ): int32;{$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_to_int32_round_to_zero( a: Float32rec ): int32;compilerproc;
  Var
     aSign : flag;
     aExp, shiftCount : int16;
@@ -3374,7 +3359,7 @@ performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_to_float64( a : float32rec) : Float64;{$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_to_float64( a : float32rec) : Float64;compilerproc;
   Var
     aSign : flag;
     aExp : int16;
@@ -3513,7 +3498,7 @@ operation is performed according to the IEC/IEEE Standard for Binary
 Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_round_to_int( a: float32rec): float32rec;{$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_round_to_int( a: float32rec): float32rec;compilerproc;
   Var
     aSign: flag;
     aExp: int16;
@@ -3811,7 +3796,7 @@ and `b'.  The operation is performed according to the IEC/IEEE Standard for
 Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_add( a: float32rec; b:float32rec ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_add( a: float32rec; b:float32rec ): float32rec; compilerproc;
   Var
     aSign, bSign: Flag;
   Begin
@@ -3834,7 +3819,7 @@ Returns the result of subtracting the single-precision floating-point values
 for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_sub( a: float32rec ; b:float32rec ): float32rec;{$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_sub( a: float32rec ; b:float32rec ): float32rec;compilerproc;
   Var
     aSign, bSign: flag;
   Begin
@@ -3857,7 +3842,7 @@ Returns the result of multiplying the single-precision floating-point values
 for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_mul(a: float32rec; b: float32rec ) : float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_mul(a: float32rec; b: float32rec ) : float32rec; compilerproc;
 
   Var
     aSign, bSign, zSign: flag;
@@ -3941,7 +3926,7 @@ by the corresponding value `b'.  The operation is performed according to the
 IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_div(a: float32rec;b: float32rec ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_div(a: float32rec;b: float32rec ): float32rec; compilerproc;
   Var
     aSign, bSign, zSign: flag;
     aExp, bExp, zExp: int16;
@@ -4041,7 +4026,7 @@ with respect to the corresponding value `b'.  The operation is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_rem(a: float32rec; b: float32rec ):float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_rem(a: float32rec; b: float32rec ):float32rec; compilerproc;
   Var
     aSign, zSign: flag;
     aExp, bExp, expDiff: int16;
@@ -4159,7 +4144,7 @@ The operation is performed according to the IEC/IEEE Standard for Binary
 Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_sqrt(a: float32rec ): float32rec;{$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_sqrt(a: float32rec ): float32rec;compilerproc;
 Var
     aSign : flag;
     aExp, zExp : int16;
@@ -4242,7 +4227,7 @@ the corresponding value `b', and 0 otherwise.  The comparison is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_eq( a:float32rec; b:float32rec): flag; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_eq( a:float32rec; b:float32rec): flag; compilerproc;
 Begin
     if ((( extractFloat32Exp( a.float32 ) = $FF ) AND  (extractFloat32Frac( a.float32 )<>0))
          OR ( ( extractFloat32Exp( b.float32 ) = $FF ) AND  (extractFloat32Frac( b.float32 )<>0) )
@@ -4266,7 +4251,7 @@ is performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_le( a: float32rec; b : float32rec ):flag;{$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_le( a: float32rec; b : float32rec ):flag;compilerproc;
 var
     aSign, bSign: flag;
 Begin
@@ -4297,7 +4282,7 @@ the corresponding value `b', and 0 otherwise.  The comparison is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float32_lt( a:float32rec ; b : float32rec): flag; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float32_lt( a:float32rec ; b : float32rec): flag; compilerproc;
 var
     aSign, bSign: flag;
 Begin
@@ -4420,7 +4405,7 @@ positive integer is returned.  Otherwise, if the conversion overflows, the
 largest integer with the same sign as `a' is returned.
 -------------------------------------------------------------------------------
 *}
-Function float64_to_int32(a: float64): int32;{$ifdef FPC_IS_SYSTEM} [public,Alias:'FLOAT64_TO_INT32'];compilerproc;{$endif}
+Function float64_to_int32(a: float64): int32;{$ifdef fpc} [public,Alias:'FLOAT64_TO_INT32'];compilerproc;{$endif}
 var
     aSign: flag;
     aExp, shiftCount: int16;
@@ -4517,7 +4502,7 @@ returned.
 -------------------------------------------------------------------------------
 *}
 Function float64_to_int32_round_to_zero(a: float64 ): int32;
-{$ifdef FPC_IS_SYSTEM} [public,Alias:'FLOAT64_TO_INT32_ROUND_TO_ZERO'];compilerproc;{$endif}
+{$ifdef fpc} [public,Alias:'FLOAT64_TO_INT32_ROUND_TO_ZERO'];compilerproc;{$endif}
 Var
     aSign: flag;
     aExp, shiftCount: int16;
@@ -4679,7 +4664,7 @@ performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 *}
-Function float64_to_float32(a: float64 ): float32rec;{$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+Function float64_to_float32(a: float64 ): float32rec;compilerproc;
 Var
     aSign: flag;
     aExp: int16;
@@ -4756,7 +4741,7 @@ operation is performed according to the IEC/IEEE Standard for Binary
 Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
-function float64_round_to_int(a: float64) : Float64;{$ifdef FPC_IS_SYSTEM} [public,Alias:'FLOAT64_ROUND_TO_INT'];compilerproc;{$endif}
+function float64_round_to_int(a: float64) : Float64;{$ifdef fpc} [public,Alias:'FLOAT64_ROUND_TO_INT'];compilerproc;{$endif}
 
 Var
     aSign: flag;
@@ -5120,7 +5105,7 @@ Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
 Function float64_add( a: float64; b : float64) : Float64;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_ADD'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_ADD'];compilerproc;{$endif}
 Var
     aSign, bSign: flag;
 Begin
@@ -5144,7 +5129,7 @@ for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
 Function float64_sub(a: float64; b : float64) : Float64;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_SUB'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_SUB'];compilerproc;{$endif}
 Var
     aSign, bSign: flag;
 Begin
@@ -5168,7 +5153,7 @@ for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
 Function float64_mul( a: float64; b:float64) : Float64;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_MUL'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_MUL'];compilerproc;{$endif}
 Var
     aSign, bSign, zSign: flag;
     aExp, bExp, zExp: int16;
@@ -5257,7 +5242,7 @@ IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
 Function float64_div(a: float64; b : float64) : Float64;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_DIV'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_DIV'];compilerproc;{$endif}
 Var
     aSign, bSign, zSign: flag;
     aExp, bExp, zExp: int16;
@@ -5373,7 +5358,7 @@ according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
 Function float64_rem(a: float64; b : float64) : float64;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_REM'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_REM'];compilerproc;{$endif}
 Var
     aSign, zSign: flag;
     aExp, bExp, expDiff: int16;
@@ -5512,7 +5497,7 @@ Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
 function float64_sqrt( a: float64 ): float64;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_SQRT'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_SQRT'];compilerproc;{$endif}
 Var
     aSign: flag;
     aExp, zExp: int16;
@@ -5607,7 +5592,7 @@ according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
 Function float64_eq(a: float64; b: float64): flag;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_EQ'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_EQ'];compilerproc;{$endif}
 Begin
     if
          (
@@ -5647,7 +5632,7 @@ Arithmetic.
 -------------------------------------------------------------------------------
 *}
 Function float64_le(a: float64;b: float64): flag;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_LE'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_LE'];compilerproc;{$endif}
 Var
     aSign, bSign: flag;
 Begin
@@ -5695,7 +5680,7 @@ according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 *}
 Function float64_lt(a: float64;b: float64): flag;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'FLOAT64_LT'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'FLOAT64_LT'];compilerproc;{$endif}
 Var
     aSign, bSign: flag;
 Begin
@@ -5878,7 +5863,7 @@ End;
 | to the single-precision floating-point format.  The conversion is performed
 | according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 *----------------------------------------------------------------------------*}
-function int64_to_float32( a: int64 ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+function int64_to_float32( a: int64 ): float32rec; compilerproc;
 var
     zSign : flag;
     absA : uint64;
@@ -5919,7 +5904,7 @@ End;
 | according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 | Unisgned version.
 *----------------------------------------------------------------------------*}
-function qword_to_float32( a: qword ): float32rec; {$ifdef FPC_IS_SYSTEM}compilerproc;{$endif FPC_IS_SYSTEM}
+function qword_to_float32( a: qword ): float32rec; compilerproc;
 var
     absA : uint64;
     shiftCount: int8;
@@ -5953,7 +5938,7 @@ End;
 | according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 *----------------------------------------------------------------------------*}
 function qword_to_float64( a: qword ): float64;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'QWORD_TO_FLOAT64'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'QWORD_TO_FLOAT64'];compilerproc;{$endif}
 var
   shiftCount: int8;
 Begin
@@ -5984,7 +5969,7 @@ End;
 | according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 *----------------------------------------------------------------------------*}
 function int64_to_float64( a: int64 ): float64;
-{$ifdef FPC_IS_SYSTEM}[public,Alias:'INT64_TO_FLOAT64'];compilerproc;{$endif}
+{$ifdef fpc}[public,Alias:'INT64_TO_FLOAT64'];compilerproc;{$endif}
 Begin
   if ( a = 0 ) then
     result := packFloat64( 0, 0, 0 )
@@ -9381,11 +9366,5 @@ end;
 {$if not(defined(fpc_softfpu_interface)) and not(defined(fpc_softfpu_implementation))}
 
 end.
-
-{$ifdef FPC}
-  { restore context modified at implmentation start
-    to possibly re-enable range and overflow checking explicitly}
-  {$pop}
-{$endif FPC}
 
 {$endif not(defined(fpc_softfpu_interface)) and not(defined(fpc_softfpu_implementation))}
