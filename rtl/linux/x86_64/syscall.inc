@@ -28,15 +28,15 @@ asm
   call mcount
   popq sysnr
 {$endif FPC_PROFILE}
-  movq sysnr, %rax        { Syscall number -> rax.  }
-  syscall                 { Do the system call. }
-  cmpq $-4095, %rax       { Check %rax for error.  }
-  jnae .LSyscOK           { Jump to error handler if error.  }
-  negq  %rax
-  movq  %rax,%rdi
-  call  seterrno@PLT
-  movq  $-1,%rax
-.LSyscOK:
+//  movq sysnr, %rax        { Syscall number -> rax.  }
+//  syscall                 { Do the system call. }
+//  cmpq $-4095, %rax       { Check %rax for error.  }
+//  jnae .LSyscOK           { Jump to error handler if error.  }
+//  negq  %rax
+//  movq  %rax,%rdi
+//  call  seterrno@PLT
+//  movq  $-1,%rax
+//.LSyscOK:
 end;
 
 function FpSysCall(sysnr,param1 : TSysParam):TSysResult; assembler;[public,alias:'FPC_SYSCALL1'];
@@ -49,16 +49,16 @@ asm
   popq param1
   popq sysnr
 {$endif FPC_PROFILE}
-  movq sysnr, %rax        { Syscall number -> rax.  }
-  movq param1, %rdi         { shift arg1 - arg5. }
-  syscall                 { Do the system call. }
-  cmpq $-4095, %rax       { Check %rax for error.  }
-  jnae .LSyscOK           { Jump to error handler if error.  }
-  negq  %rax
-  movq  %rax,%rdi
-  call  seterrno@PLT
-  movq  $-1,%rax
-.LSyscOK:
+//  movq sysnr, %rax        { Syscall number -> rax.  }
+//  movq param1, %rdi         { shift arg1 - arg5. }
+//  syscall                 { Do the system call. }
+//  cmpq $-4095, %rax       { Check %rax for error.  }
+//  jnae .LSyscOK           { Jump to error handler if error.  }
+//  negq  %rax
+//  movq  %rax,%rdi
+//  call  seterrno@PLT
+//  movq  $-1,%rax
+//.LSyscOK:
 end;
 
 function FpSysCall(sysnr,param1,param2 : TSysParam):TSysResult; assembler;[public,alias:'FPC_SYSCALL2'];
@@ -73,17 +73,17 @@ asm
   popq param1
   popq sysnr
 {$endif FPC_PROFILE}
-  movq sysnr, %rax        { Syscall number -> rax.  }
-  movq param1, %rdi         { shift arg1 - arg5. }
-  movq param2, %rsi
-  syscall                 { Do the system call. }
-  cmpq $-4095, %rax       { Check %rax for error.  }
-  jnae .LSyscOK           { Jump to error handler if error.  }
-  negq  %rax
-  movq  %rax,%rdi
-  call  seterrno@PLT
-  movq  $-1,%rax
-.LSyscOK:
+//  movq sysnr, %rax        { Syscall number -> rax.  }
+//  movq param1, %rdi         { shift arg1 - arg5. }
+//  movq param2, %rsi
+//  syscall                 { Do the system call. }
+//  cmpq $-4095, %rax       { Check %rax for error.  }
+//  jnae .LSyscOK           { Jump to error handler if error.  }
+//  negq  %rax
+//  movq  %rax,%rdi
+//  call  seterrno@PLT
+//  movq  $-1,%rax
+//.LSyscOK:
 end;
 
 function FpSysCall(sysnr,param1,param2,param3:TSysParam):TSysResult; assembler;[public,alias:'FPC_SYSCALL3'];
@@ -100,18 +100,18 @@ asm
   popq param1
   popq sysnr
 {$endif FPC_PROFILE}
-  movq sysnr, %rax        { Syscall number -> rax.  }
-  movq param1, %rdi         { shift arg1 - arg5. }
-  movq param2, %rsi
-  movq param3, %rdx
-  syscall                 { Do the system call. }
-  cmpq $-4095, %rax       { Check %rax for error.  }
-  jnae .LSyscOK           { Jump to error handler if error.  }
-  negq  %rax
-  movq  %rax,%rdi
-  call  seterrno@PLT
-  movq  $-1,%rax
-.LSyscOK:
+//  movq sysnr, %rax        { Syscall number -> rax.  }
+//  movq param1, %rdi         { shift arg1 - arg5. }
+//  movq param2, %rsi
+//  movq param3, %rdx
+//  syscall                 { Do the system call. }
+//  cmpq $-4095, %rax       { Check %rax for error.  }
+//  jnae .LSyscOK           { Jump to error handler if error.  }
+//  negq  %rax
+//  movq  %rax,%rdi
+//  call  seterrno@PLT
+//  movq  $-1,%rax
+//.LSyscOK:
 end;
 
 function FpSysCall(sysnr,param1,param2,param3,param4:TSysParam):TSysResult; assembler;[public,alias:'FPC_SYSCALL4'];
@@ -130,19 +130,19 @@ asm
   popq param1
   popq sysnr
 {$endif FPC_PROFILE}
-  movq sysnr, %rax        { Syscall number -> rax.  }
-  movq param1, %rdi         { shift arg1 - arg5. }
-  movq param2, %rsi
-  movq param3, %rdx
-  movq param4, %r10
-  syscall                 { Do the system call. }
-  cmpq $-4095, %rax       { Check %rax for error.  }
-  jnae .LSyscOK           { Jump to error handler if error.  }
-  negq  %rax
-  movq  %rax,%rdi
-  call  seterrno@PLT
-  movq  $-1,%rax
-.LSyscOK:
+//  movq sysnr, %rax        { Syscall number -> rax.  }
+//  movq param1, %rdi         { shift arg1 - arg5. }
+//  movq param2, %rsi
+//  movq param3, %rdx
+//  movq param4, %r10
+//  syscall                 { Do the system call. }
+//  cmpq $-4095, %rax       { Check %rax for error.  }
+//  jnae .LSyscOK           { Jump to error handler if error.  }
+//  negq  %rax
+//  movq  %rax,%rdi
+//  call  seterrno@PLT
+//  movq  $-1,%rax
+//.LSyscOK:
 end;
 
 function FpSysCall(sysnr,param1,param2,param3,param4,param5 : TSysParam):TSysResult; assembler;[public,alias:'FPC_SYSCALL5'];
@@ -163,20 +163,20 @@ asm
   popq param1
   popq sysnr
 {$endif FPC_PROFILE}
-  movq sysnr, %rax        { Syscall number -> rax.  }
-  movq param1, %rdi         { shift arg1 - arg5. }
-  movq param2, %rsi
-  movq param3, %rdx
-  movq param4, %r10
-  movq param5, %r8
-  syscall                 { Do the system call. }
-  cmpq $-4095, %rax       { Check %rax for error.  }
-  jnae .LSyscOK           { Jump to error handler if error.  }
-  negq  %rax
-  movq  %rax,%rdi
-  call  seterrno@PLT
-  movq  $-1,%rax
-.LSyscOK:
+//  movq sysnr, %rax        { Syscall number -> rax.  }
+//  movq param1, %rdi         { shift arg1 - arg5. }
+//  movq param2, %rsi
+//  movq param3, %rdx
+//  movq param4, %r10
+//  movq param5, %r8
+//  syscall                 { Do the system call. }
+//  cmpq $-4095, %rax       { Check %rax for error.  }
+//  jnae .LSyscOK           { Jump to error handler if error.  }
+//  negq  %rax
+//  movq  %rax,%rdi
+//  call  seterrno@PLT
+//  movq  $-1,%rax
+//.LSyscOK:
 end;
 
 
@@ -200,21 +200,21 @@ asm
   popq param1
   popq sysnr
 {$endif FPC_PROFILE}
-  movq sysnr, %rax        { Syscall number -> rax.  }
-  movq param1, %rdi         { shift arg1 - arg5. }
-  movq param2, %rsi
-  movq param3, %rdx
-  movq param4, %r10
-  movq param5, %r8
-  movq param6, %r9
-  syscall                 { Do the system call. }
-  cmpq $-4095, %rax       { Check %rax for error.  }
-  jnae .LSyscOK           { Jump to error handler if error.  }
-  negq  %rax
-  movq  %rax,%rdi
-  call  seterrno@PLT
-  movq  $-1,%rax
-.LSyscOK:
+//  movq sysnr, %rax        { Syscall number -> rax.  }
+//  movq param1, %rdi         { shift arg1 - arg5. }
+//  movq param2, %rsi
+//  movq param3, %rdx
+//  movq param4, %r10
+//  movq param5, %r8
+//  movq param6, %r9
+//  syscall                 { Do the system call. }
+//  cmpq $-4095, %rax       { Check %rax for error.  }
+//  jnae .LSyscOK           { Jump to error handler if error.  }
+//  negq  %rax
+//  movq  %rax,%rdi
+//  call  seterrno@PLT
+//  movq  $-1,%rax
+//.LSyscOK:
 end;
 
 

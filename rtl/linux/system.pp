@@ -28,6 +28,10 @@ Unit System;
 {$define FPC_IS_SYSTEM}
 {$define HAS_CMDLINE}
 {$define USE_NOTHREADMANAGER}
+{$undef FPC_HAS_INDIRECT_ENTRY_INFORMATION}
+{$define FPC_NO_DEFAULT_MEMORYMANAGER}
+{$define HAS_MEMORYMANAGER}
+{$define TORO}
 
 {$i osdefs.inc}
 
@@ -180,12 +184,15 @@ procedure haltproc(e:longint);cdecl;external name '_haltproc';
 function  FpPrCtl(options : cInt; const args : ptruint) : cint; cdecl; external clib name 'prctl';
 {$endif}
 
+procedure ToroExit; external name 'SYSTEMEXIT';
+
 procedure System_exit;
 begin
 {$ifdef FPC_HAS_INDIRECT_ENTRY_INFORMATION}
   EntryInformation.OS.haltproc(ExitCode);
 {$else FPC_HAS_INDIRECT_ENTRY_INFORMATION}
-  haltproc(ExitCode);
+  ToroExit; 
+  //haltproc(ExitCode);
 {$endif FPC_HAS_INDIRECT_ENTRY_INFORMATION}
 End;
 
@@ -249,19 +256,19 @@ var
   var
     p : Pchar;
   begin
-    p:=SysGetmem(size+bufsize);
-    move(calculated_cmdline^,p^,size);
-    move(buf^,p[size],bufsize);
-    inc(size,bufsize);
-    sysfreemem(calculated_cmdline);
-    calculated_cmdline:=p;
-    bufsize:=0;
+    //p:=SysGetmem(size+bufsize);
+    //move(calculated_cmdline^,p^,size);
+    //move(buf^,p[size],bufsize);
+    //inc(size,bufsize);
+    //sysfreemem(calculated_cmdline);
+    //calculated_cmdline:=p;
+    //bufsize:=0;
   end;
 
 begin
   if argc<=0 then
     exit;
-  Buf:=SysGetMem(ARG_MAX);
+  //Buf:=SysGetMem(ARG_MAX);
   size:=0;
   bufsize:=0;
   i:=0;
@@ -303,7 +310,7 @@ begin
      inc(i);
    end;
   AddBuf;
-  SysFreeMem(buf);
+  //SysFreeMem(buf);
 end;
 
 function get_cmdline:Pchar;
@@ -363,30 +370,30 @@ var
 
 Procedure InstallSignals;
 begin
-  InstallDefaultSignalHandler(SIGFPE,oldsigfpe);
-  InstallDefaultSignalHandler(SIGSEGV,oldsigsegv);
-  InstallDefaultSignalHandler(SIGBUS,oldsigbus);
-  InstallDefaultSignalHandler(SIGILL,oldsigill);
+  //InstallDefaultSignalHandler(SIGFPE,oldsigfpe);
+  //InstallDefaultSignalHandler(SIGSEGV,oldsigsegv);
+  //InstallDefaultSignalHandler(SIGBUS,oldsigbus);
+  //InstallDefaultSignalHandler(SIGILL,oldsigill);
 end;
 
 procedure SysInitStdIO;
 begin
-  OpenStdIO(Input,fmInput,StdInputHandle);
-  OpenStdIO(Output,fmOutput,StdOutputHandle);
-  OpenStdIO(ErrOutput,fmOutput,StdErrorHandle);
-  OpenStdIO(StdOut,fmOutput,StdOutputHandle);
-  OpenStdIO(StdErr,fmOutput,StdErrorHandle);
-{$ifdef android}
-  InitStdIOAndroid;
-{$endif android}
+  //OpenStdIO(Input,fmInput,StdInputHandle);
+  //OpenStdIO(Output,fmOutput,StdOutputHandle);
+  //OpenStdIO(ErrOutput,fmOutput,StdErrorHandle);
+  //OpenStdIO(StdOut,fmOutput,StdOutputHandle);
+  //OpenStdIO(StdErr,fmOutput,StdErrorHandle);
+//{$ifdef android}
+//  InitStdIOAndroid;
+//{$endif android}
 end;
 
 Procedure RestoreOldSignalHandlers;
 begin
-  FpSigAction(SIGFPE,@oldsigfpe,nil);
-  FpSigAction(SIGSEGV,@oldsigsegv,nil);
-  FpSigAction(SIGBUS,@oldsigbus,nil);
-  FpSigAction(SIGILL,@oldsigill,nil);
+  //FpSigAction(SIGFPE,@oldsigfpe,nil);
+  //FpSigAction(SIGSEGV,@oldsigsegv,nil);
+  //FpSigAction(SIGBUS,@oldsigbus,nil);
+  //FpSigAction(SIGILL,@oldsigill,nil);
 end;
 
 
@@ -444,47 +451,47 @@ begin
 end;
 
 begin
-{$if defined(i386) and not defined(FPC_USE_LIBC)}
-  InitSyscallIntf;
-{$endif}
+//{$if defined(i386) and not defined(FPC_USE_LIBC)}
+//  InitSyscallIntf;
+//{$endif}
 
-{$ifndef FPUNONE}
-{$if defined(cpupowerpc)}
+//{$ifndef FPUNONE}
+//{$if defined(cpupowerpc)}
   // some PPC kernels set the exception bits FE0/FE1 in the MSR to zero,
   // disabling all FPU exceptions. Enable them again.
-  fpprctl(PR_SET_FPEXC, PR_FP_EXC_PRECISE);
-{$endif}
-{$endif}
-  IsConsole := TRUE;
-  StackLength := CheckInitialStkLen(initialStkLen);
+//  fpprctl(PR_SET_FPEXC, PR_FP_EXC_PRECISE);
+//{$endif}
+//{$endif}
+//  IsConsole := TRUE;
+  StackLength := 64 * 1024;//CheckInitialStkLen(initialStkLen);
   StackBottom := pointer((ptruint(initialstkptr) or (page_size - 1)) + 1 - StackLength);
-{$ifdef LAST_PAGE_GENERATES_SIGNAL}
+//{$ifdef LAST_PAGE_GENERATES_SIGNAL}
   StackBottom:=StackBottom + page_size;
-{$endif}
-  { Set up signals handlers (may be needed by init code to test cpu features) }
-  InstallSignals;
-{$if defined(cpui386) or defined(cpuarm)}
-  fpc_cpucodeinit;
-{$endif cpui386}
+//{$endif}
+//  { Set up signals handlers (may be needed by init code to test cpu features) }
+//  InstallSignals;
+//{$if defined(cpui386) or defined(cpuarm)}
+//  fpc_cpucodeinit;
+//{$endif cpui386}
 
-  { Setup heap }
-  InitHeap;
+//  { Setup heap }
+//  InitHeap;
   SysInitExceptions;
-  initunicodestringmanager;
-  { Setup stdin, stdout and stderr }
-  SysInitStdIO;
-  { Arguments }
-  SysInitExecPath;
-  { Reset IO Error }
+//  initunicodestringmanager;
+  //{ Setup stdin, stdout and stderr }
+  //SysInitStdIO;
+//  { Arguments }
+  //SysInitExecPath;
+//  { Reset IO Error }
   InOutRes:=0;
-  { threading }
-  InitSystemThreads;
-  { dynamic libraries }
-  InitSystemDynLibs;
-{$ifdef android}
-  InitAndroid;
-{$endif android}
-  { restore original signal handlers in case this is a library }
-  if IsLibrary then
-    RestoreOldSignalHandlers;
+//  { threading }
+//  InitSystemThreads;
+//  { dynamic libraries }
+//  InitSystemDynLibs;
+//{$ifdef android}
+//  InitAndroid;
+//{$endif android}
+//  { restore original signal handlers in case this is a library }
+//  if IsLibrary then
+//    RestoreOldSignalHandlers;
 end.

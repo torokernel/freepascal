@@ -1232,15 +1232,15 @@ end;
 {$endif android}
 
 Initialization
-{$IFNDEF DONT_READ_TIMEZONE}
-  InitLocalTime;
-{$endif}
-{$ifdef android}
-  InitLocalTime;
-{$endif android}
+//{$IFNDEF DONT_READ_TIMEZONE}
+//  InitLocalTime;
+//{$endif}
+//{$ifdef android}
+//  InitLocalTime;
+//{$endif android}
 
 finalization
-{$IFNDEF DONT_READ_TIMEZONE}
-  DoneLocalTime;
-{$endif}
+//{$IFNDEF DONT_READ_TIMEZONE}
+//  DoneLocalTime;
+//{$endif}
 End.

@@ -1691,16 +1691,16 @@ end;
 ****************************************************************************}
 
 Initialization
-  InitExceptions;       { Initialize exceptions. OS independent }
-  InitInternational;    { Initialize internationalization settings }
-  SysConfigDir:='/etc'; { Initialize system config dir }
-  OnBeep:=@SysBeep;
-{$ifdef android}
-  InitAndroid;
-{$endif android}
+//  InitExceptions;       { Initialize exceptions. OS independent }
+//  InitInternational;    { Initialize internationalization settings }
+//  SysConfigDir:='/etc'; { Initialize system config dir }
+//  OnBeep:=@SysBeep;
+//{$ifdef android}
+//  InitAndroid;
+//{$endif android}
 
 Finalization
-  FreeDriveStr;
-  FreeTerminateProcs;
-  DoneExceptions;
+//  FreeDriveStr;
+//  FreeTerminateProcs;
+//  DoneExceptions;
 end.

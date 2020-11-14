@@ -33,7 +33,7 @@
 
 {$asmmode gas}
 
-{$L abitag.o}
+//{$L abitag.o}
 
 {******************************************************************************
                           Process start/halt
@@ -73,23 +73,23 @@ procedure _FPC_proc_start; assembler; nostackframe; public name '_start';
     xorq    %rbp, %rbp
     call    SysEntry
 {$else FPC_HAS_INDIRECT_ENTRY_INFORMATION}
-    popq     %rsi                                  { Pop the argument count.  }
-    movq     operatingsystem_parameter_argc@GOTPCREL(%rip),%rax
-    movq     %rsi,(%rax)
-    movq     operatingsystem_parameter_argv@GOTPCREL(%rip),%rax
-    movq     %rsp,(%rax)                           { argv starts just at the current stack top.  }
-    leaq     8(,%rsi,8),%rax
-    addq     %rsp,%rax
-    movq     operatingsystem_parameter_envp@GOTPCREL(%rip),%rsi
-    movq     %rax,(%rsi)
-    andq     $0xfffffffffffffff0,%rsp                             { Align the stack to a 16 byte boundary to follow the ABI.  }
+//    popq     %rsi                                  { Pop the argument count.  }
+//    movq     operatingsystem_parameter_argc@GOTPCREL(%rip),%rax
+//    movq     %rsi,(%rax)
+//    movq     operatingsystem_parameter_argv@GOTPCREL(%rip),%rax
+//    movq     %rsp,(%rax)                           { argv starts just at the current stack top.  }
+//    leaq     8(,%rsi,8),%rax
+//    addq     %rsp,%rax
+//    movq     operatingsystem_parameter_envp@GOTPCREL(%rip),%rsi
+//    movq     %rax,(%rsi)
+//    andq     $0xfffffffffffffff0,%rsp                             { Align the stack to a 16 byte boundary to follow the ABI.  }
 
     { Save initial stackpointer }
-    movq    initialstkptr@GOTPCREL(%rip),%rax
-    movq    %rsp,(%rax)
+  //  movq    initialstkptr@GOTPCREL(%rip),%rax
+ //   movq    %rsp,(%rax)
 
-    xorq    %rbp, %rbp
-    call    PASCALMAIN
+   // xorq    %rbp, %rbp
+ //   call    PASCALMAIN
 {$endif FPC_HAS_INDIRECT_ENTRY_INFORMATION}
   end;
 

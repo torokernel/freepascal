@@ -1107,10 +1107,12 @@ Begin
     end;
 {$endif}
 {$ifdef LINUX}
+{$ifndef TORO}
   {sysfreemem already checks for nil}
   { Do not try to do anything if the heap manager already reported an error }
   if (errorcode<>203) and (errorcode<>204) then
     sysfreemem(calculated_cmdline);
+{$endif not TORO}
 {$endif}
 {$ifdef BSD}
   { Do not try to do anything if the heap manager already reported an error }

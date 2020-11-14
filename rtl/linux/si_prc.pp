@@ -14,6 +14,7 @@
 
 unit si_prc;
 
+{$undef FPC_HAS_INDIRECT_ENTRY_INFORMATION}
 interface
 
 {$i si_intf.inc}
